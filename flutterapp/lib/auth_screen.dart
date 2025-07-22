@@ -212,7 +212,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           height: 50,
           child: ElevatedButton(
             onPressed: () {
-              // Handle sign in
+              Navigator.pushReplacementNamed(context, '/main');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4A90E2),
@@ -354,7 +354,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           height: 50,
           child: ElevatedButton(
             onPressed: () {
-              // Handle register
+              Navigator.pushReplacementNamed(context, '/main');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4A90E2),
@@ -365,7 +365,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               elevation: 0,
             ),
             child: const Text(
-              'Sign in',
+              'Register',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
