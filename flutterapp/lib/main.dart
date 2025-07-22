@@ -5,7 +5,7 @@ import 'auth_screen.dart';
 import 'home_screen.dart';
 import 'search_screen.dart';
 import 'schedule_screen.dart';
-import 'profile_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   // Ensures that binding is initialised before runApp is called.

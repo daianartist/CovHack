@@ -12,14 +12,12 @@ class SocialLoginButtons extends StatelessWidget {
           icon: Icons.facebook,
           color: const Color(0xFF1877F2),
           onPressed: () {
-            // Handle Facebook login
           },
         ),
         _buildSocialButton(
           icon: Icons.g_mobiledata,
           color: const Color(0xFFDB4437),
           onPressed: () {
-            // Handle Google login
           },
         ),
         _buildSocialButton(
