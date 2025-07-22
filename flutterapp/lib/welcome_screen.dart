@@ -82,12 +82,7 @@ class WelcomeScreen extends StatelessWidget {
                 height: 50,
                 child: OutlinedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AuthScreen(initialTab: 1),
-                      ),
-                    );
+                    Navigator.pushNamed(context, '/auth', arguments: {'initialTab': 1});
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF4A90E2),
@@ -111,7 +106,7 @@ class WelcomeScreen extends StatelessWidget {
               // Stay as guest
               TextButton(
                 onPressed: () {
-                  // Handle guest access
+                  Navigator.pushReplacementNamed(context, '/main');
                 },
                 child: const Text(
                   'Stay as a guest',
