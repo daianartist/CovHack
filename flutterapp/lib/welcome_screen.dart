@@ -18,7 +18,10 @@ class WelcomeScreen extends StatelessWidget {
               const Spacer(flex: 2),
               
               // University Logo
-              const UniversityLogo(size: 120),
+              Image.asset(
+                'assets/logo_covuni.png',
+                height: 120,
+              ),
               
               const SizedBox(height: 60),
               

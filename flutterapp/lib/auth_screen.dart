@@ -52,8 +52,10 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              // University Logo
-              const UniversityLogo(size: 80),
+              Image.asset(
+                'assets/logo_covuni.png',
+                height: 80,
+              ),
               
               const SizedBox(height: 40),
               

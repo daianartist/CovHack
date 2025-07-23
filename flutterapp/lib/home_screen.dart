@@ -25,7 +25,6 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Club Header
             Row(
               children: [
                 CircleAvatar(
@@ -60,14 +59,12 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: 16),
             
-            // Description
             Text(
               'Description of Club',
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 20),
             
-            // Event Image
             Container(
               width: double.infinity,
               height: 300,
@@ -95,7 +92,6 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: 16),
             
-            // Event Info Button
             GestureDetector(
               onTap: () {
                 Navigator.push(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'event_detail_screen.dart';
+import 'event_account_screen.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -86,7 +86,6 @@ class SearchScreen extends StatelessWidget {
                       ),
                       SizedBox(width: 12),
                       
-                      // Club Info
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,14 +101,13 @@ class SearchScreen extends StatelessWidget {
                         ),
                       ),
                       
-                      // More Button
                       ElevatedButton(
                         onPressed: () {
                           if (index == 0) {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => EventDetailScreen(),
+                                builder: (context) => EventAccountScreen(),
                               ),
                             );
                           }
