@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+
+# Docker
+*.log
+*.pid
+
+# Alembic
+alembic/versions/*.pyc
+
+# OS
+.DS_Store
