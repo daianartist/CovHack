@@ -4,8 +4,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, declarative_base
 import enum
 from datetime import datetime
-
-Base = declarative_base()
+from database import Base
 
 class UserRole(enum.Enum):
     student = "student"
