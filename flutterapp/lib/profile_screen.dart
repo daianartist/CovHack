@@ -63,8 +63,8 @@ class ProfileScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Arapbekova Daiana',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                'Zhaksylykova Daiana',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
               ),
               const SizedBox(height: 8),
               ActionChip(
@@ -201,8 +201,8 @@ class ProfileScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _StatColumn(value: '7', label: 'Visited Events', icon: Icons.star, iconColor: Colors.orange),
-              _StatColumn(value: '3', label: 'Studios visited', icon: Icons.location_on, iconColor: Colors.blue),
-              _StatColumn(value: '1', label: 'Classes\nthis week', icon: Icons.calendar_today, iconColor: Colors.purple),
+              _StatColumn(value: '3', label: 'Organized events', icon: Icons.location_on, iconColor: Colors.blue),
+              _StatColumn(value: '1', label: 'Event\nthis month', icon: Icons.calendar_today, iconColor: Colors.purple),
             ],
           ),
         ],

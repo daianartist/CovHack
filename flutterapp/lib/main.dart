@@ -5,10 +5,9 @@ import 'auth_screen.dart';
 import 'home_screen.dart';
 import 'search_screen.dart';
 import 'schedule_screen.dart';
-import 'screens/profile_screen.dart';
+import 'profile_screen.dart';
 
 void main() {
-  // Ensures that binding is initialised before runApp is called.
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const CoventryUniversityApp());
 }
@@ -31,7 +30,6 @@ class CoventryUniversityApp extends StatelessWidget {
           systemOverlayStyle: SystemUiOverlayStyle.dark,
         ),
       ),
-      // Use named routes so you can pushReplacement when auth completes.
       initialRoute: '/',
       routes: {
         '/': (context) => const WelcomeScreen(),
@@ -46,9 +44,6 @@ class CoventryUniversityApp extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-//                       MAIN SHELL WITH NAV BAR
-// ──────────────────────────────────────────────────────────────────────────────
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -101,7 +96,6 @@ class _MainScreenState extends State<MainScreen> {
       ),
     ).whenComplete(() {
       setState(() {
-        // Revert nav bar index to the actual screen index
         if (_navBarIndex == 2) {
            _navBarIndex = _screenIndex <= 1 ? _screenIndex : _screenIndex + 1;
         }
@@ -121,7 +115,7 @@ class _MainScreenState extends State<MainScreen> {
         showUnselectedLabels: true,
         currentIndex: _navBarIndex,
         onTap: (index) {
-          if (index == 2) { // Menu is tapped
+          if (index == 2) { 
             setState(() {
               _navBarIndex = index;
             });
@@ -129,7 +123,6 @@ class _MainScreenState extends State<MainScreen> {
           } else {
             setState(() {
               _navBarIndex = index;
-              // Map nav bar index to screen index (because menu is not a screen)
               _screenIndex = index > 2 ? index - 1 : index;
             });
           }
