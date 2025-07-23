@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'ranking.dart';
 import 'notifications_screen.dart';
+import 'certificates.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -38,7 +39,14 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 24),
             _buildInfoCard(
               title: 'Certificate',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CertificatesScreen(),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 16),
             _buildStatsRow(context),
