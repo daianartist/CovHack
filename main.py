@@ -1,13 +1,15 @@
 # main.py
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import FastAPI, Depends, HTTPException, Path
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from models import User, Base
-from schemas import UserCreate, UserLogin, Token
+from models import User, Base, Club, Event, Membership, Registration
+from schemas import UserCreate, UserLogin, Token, ClubCreate, ClubOut, EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, RegistrationOut
 from auth_utils import hash_password, verify_password
 from jwt_utils import create_access_token
 from database import get_db  # You need a get_db dependency for SQLAlchemy session
 from auth import get_current_user
+from typing import List
+from datetime import datetime
 
 app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -26,11 +28,14 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/login", response_model=Token)
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if not db_user or not verify_password(user.password, db_user.password):
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.email == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    access_token = create_access_token(data={"sub": db_user.email})
+    access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/me")
@@ -41,3 +46,113 @@ def read_users_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "role": current_user.role
     }
+
+### **Clubs**
+
+@app.post("/clubs/", response_model=ClubOut)
+def create_club(club: ClubCreate, db: Session = Depends(get_db)):
+    db_club = Club(**club.dict())
+    db.add(db_club)
+    db.commit()
+    db.refresh(db_club)
+    return db_club
+
+@app.get("/clubs/", response_model=List[ClubOut])
+def get_clubs(db: Session = Depends(get_db)):
+    return db.query(Club).all()
+
+@app.get("/clubs/{club_id}", response_model=ClubOut)
+def get_club(club_id: int = Path(...), db: Session = Depends(get_db)):
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    return club
+
+@app.put("/clubs/{club_id}", response_model=ClubOut)
+def update_club(club_id: int, club: ClubCreate, db: Session = Depends(get_db)):
+    db_club = db.query(Club).filter(Club.id == club_id).first()
+    if not db_club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    for key, value in club.dict().items():
+        setattr(db_club, key, value)
+    db.commit()
+    db.refresh(db_club)
+    return db_club
+
+@app.delete("/clubs/{club_id}")
+def delete_club(club_id: int, db: Session = Depends(get_db)):
+    db_club = db.query(Club).filter(Club.id == club_id).first()
+    if not db_club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    db.delete(db_club)
+    db.commit()
+    return {"detail": "Club deleted"}
+
+### **Events**
+
+@app.post("/events/", response_model=EventOut)
+def create_event(event: EventCreate, db: Session = Depends(get_db)):
+    db_event = Event(**event.dict())
+    db.add(db_event)
+    db.commit()
+    db.refresh(db_event)
+    return db_event
+
+@app.get("/events/", response_model=List[EventOut])
+def get_events(db: Session = Depends(get_db)):
+    return db.query(Event).all()
+
+@app.get("/events/{event_id}", response_model=EventOut)
+def get_event(event_id: int = Path(...), db: Session = Depends(get_db)):
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return event
+
+### **Memberships**
+
+@app.post("/memberships/", response_model=MembershipOut)
+def create_membership(membership: MembershipCreate, db: Session = Depends(get_db)):
+    db_membership = Membership(**membership.dict())
+    db.add(db_membership)
+    db.commit()
+    db.refresh(db_membership)
+    return db_membership
+
+@app.get("/memberships/", response_model=List[MembershipOut])
+def get_memberships(db: Session = Depends(get_db)):
+    return db.query(Membership).all()
+
+@app.get("/memberships/{membership_id}", response_model=MembershipOut)
+def get_membership(membership_id: int = Path(...), db: Session = Depends(get_db)):
+    membership = db.query(Membership).filter(Membership.id == membership_id).first()
+    if not membership:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    return membership
+
+### **Registrations**
+
+@app.post("/registrations/", response_model=RegistrationOut)
+def create_registration(registration: RegistrationCreate, db: Session = Depends(get_db)):
+    db_registration = Registration(**registration.dict())
+    db.add(db_registration)
+    db.commit()
+    db.refresh(db_registration)
+    return db_registration
+
+@app.get("/registrations/", response_model=List[RegistrationOut])
+def get_registrations(db: Session = Depends(get_db)):
+    return db.query(Registration).all()
+
+@app.get("/registrations/{registration_id}", response_model=RegistrationOut)
+def get_registration(registration_id: int = Path(...), db: Session = Depends(get_db)):
+    registration = db.query(Registration).filter(Registration.id == registration_id).first()
+    if not registration:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    return registration
+
+### **D. Filtering Example (Events by Club)**
+
+@app.get("/clubs/{club_id}/events", response_model=List[EventOut])
+def get_events_by_club(club_id: int, db: Session = Depends(get_db)):
+    return db.query(Event).filter(Event.club_id == club_id).all()
