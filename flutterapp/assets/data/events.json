@@ -1,0 +1,66 @@
+{
+  "events": [
+    {
+      "id": "event_001",
+      "name": "Debate Event",
+      "description": "Weekly debate session focusing on current affairs and critical thinking skills development.",
+      "clubId": "club_001",
+      "date": "2024-01-29T16:00:00Z",
+      "duration": 120,
+      "location": {
+        "type": "physical",
+        "address": "Conference Room A, Building 2",
+        "coordinates": {
+          "lat": 40.7128,
+          "lng": -74.0060
+        }
+      },
+      "maxParticipants": 20,
+      "currentParticipants": 12,
+      "pointsReward": 50,
+      "status": "upcoming",
+      "tags": ["debate", "discussion", "skills"],
+      "requirements": ["Basic communication skills"],
+      "organizer": "user_002",
+      "registeredUsers": ["user_001", "user_003", "user_004"],
+      "createdAt": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": "event_002",
+      "name": "Fitness Challenge",
+      "description": "Monthly fitness challenge with various workout activities and team competitions.",
+      "clubId": "club_002",
+      "date": "2024-02-05T18:00:00Z",
+      "duration": 90,
+      "location": {
+        "type": "physical",
+        "address": "Gym Hall, Sports Complex"
+      },
+      "maxParticipants": 30,
+      "currentParticipants": 18,
+      "pointsReward": 75,
+      "status": "upcoming",
+      "tags": ["fitness", "challenge", "team"],
+      "requirements": ["Basic fitness level", "Sports attire"],
+      "organizer": "user_005"
+    },
+    {
+      "id": "event_003",
+      "name": "Music Appreciation Night",
+      "description": "Evening of music sharing, live performances, and cultural exchange.",
+      "clubId": "club_003",
+      "date": "2024-02-10T19:30:00Z",
+      "duration": 180,
+      "location": {
+        "type": "hybrid",
+        "address": "Auditorium, Main Building",
+        "virtualLink": "https://meet.example.com/music-night"
+      },
+      "maxParticipants": 50,
+      "currentParticipants": 23,
+      "pointsReward": 40,
+      "status": "upcoming",
+      "tags": ["music", "performance", "culture"]
+    }
+  ]
+}

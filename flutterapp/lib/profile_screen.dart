@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'ranking.dart';
+import 'notifications_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -15,7 +17,14 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none_outlined, color: Colors.black),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
+              );
+            },
           ),
         ],
         backgroundColor: const Color(0xFFF7F8FC),
@@ -32,7 +41,7 @@ class ProfileScreen extends StatelessWidget {
               onTap: () {},
             ),
             const SizedBox(height: 16),
-            _buildStatsRow(),
+            _buildStatsRow(context),
             const SizedBox(height: 24),
             _buildProgressCard(),
           ],
@@ -107,7 +116,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsRow() {
+  Widget _buildStatsRow(BuildContext context) {
     return Row(
       children: [
         Expanded(
@@ -148,25 +157,36 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Rating', style: TextStyle(fontWeight: FontWeight.w600)),
-                    Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-                  ],
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RankingScreen(),
                 ),
-                const SizedBox(height: 12),
-                const Icon(Icons.emoji_events, color: Colors.amber, size: 28),
-              ],
+              );
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Rating', style: TextStyle(fontWeight: FontWeight.w600)),
+                      Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Icon(Icons.emoji_events, color: Colors.amber, size: 28),
+                ],
+              ),
             ),
           ),
         ),

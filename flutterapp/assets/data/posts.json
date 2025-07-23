@@ -1,0 +1,44 @@
+{
+  "posts": [
+    {
+      "id": "post_001",
+      "clubId": "club_001",
+      "authorId": "user_002",
+      "content": "Meet Diana Valente Barker, a passionate Brazilian music lover and nutrition student! 🎵✨ Her vibrant spirit shines through her love for dance, calm melodies, and creating lasting memories. Follow her journey filled with music and inspiration! 🎶",
+      "images": [
+        {
+          "url": "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-YI7IY1Z3ISuYzqsKI23Ux29aPH1zZB.png",
+          "alt": "Diana Valente Barker poster",
+          "width": 400,
+          "height": 600
+        }
+      ],
+      "likes": 45,
+      "comments": 12,
+      "shares": 8,
+      "createdAt": "2024-01-20T14:30:00Z",
+      "updatedAt": "2024-01-20T14:30:00Z",
+      "tags": ["member-spotlight", "music", "inspiration"],
+      "isPromoted": true
+    },
+    {
+      "id": "post_002",
+      "clubId": "club_002",
+      "authorId": "user_001",
+      "content": "Great workout session today! 💪 Remember to stay hydrated and listen to your body. Here's my setup for today's home workout.",
+      "images": [
+        {
+          "url": "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IQQvuD73EHzwoBKt6n24iYwmNyRvYS.png",
+          "alt": "Workout equipment setup",
+          "width": 400,
+          "height": 300
+        }
+      ],
+      "likes": 23,
+      "comments": 5,
+      "shares": 3,
+      "createdAt": "2024-01-18T09:15:00Z",
+      "tags": ["workout", "motivation", "health"]
+    }
+  ]
+}

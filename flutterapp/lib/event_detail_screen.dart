@@ -61,6 +61,7 @@ class EventDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Event Title and Details
                   Text(
                     'Debate Event',
                     style: TextStyle(
@@ -90,6 +91,7 @@ class EventDetailScreen extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 20),
+                  // Invite Friend Button
                   SizedBox(
                     width: 160,
                     child: ElevatedButton(
@@ -109,6 +111,7 @@ class EventDetailScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 30),
+                  // About Section
                   Text(
                     'About',
                     style: TextStyle(
@@ -134,7 +137,7 @@ class EventDetailScreen extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                     ),
                   ),
-                  SizedBox(height: 80), 
+                  SizedBox(height: 80), // space for fixed button
                 ],
               ),
             ),

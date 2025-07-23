@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'event_detail_screen.dart';
+import 'notifications_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
   @override
@@ -16,7 +17,14 @@ class HomeScreen extends StatelessWidget {
  
           IconButton(
             icon: Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -25,6 +33,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Club Header
             Row(
               children: [
                 CircleAvatar(
@@ -59,12 +68,14 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: 16),
             
+            // Description
             Text(
               'Description of Club',
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 20),
             
+            // Event Image
             Container(
               width: double.infinity,
               height: 300,
@@ -92,6 +103,7 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: 16),
             
+            // Event Info Button
             GestureDetector(
               onTap: () {
                 Navigator.push(

@@ -18,6 +18,7 @@ class EventAccountScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Club/Event Avatar
             CircleAvatar(
               radius: 48,
               backgroundColor: const Color(0xFF8B7CB6),

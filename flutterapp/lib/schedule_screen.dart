@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'event_detail_screen.dart';
+import 'notifications_screen.dart';
 
 class ScheduleScreen extends StatelessWidget {
   const ScheduleScreen({super.key});
@@ -21,16 +21,29 @@ class ScheduleScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.only(left: 16, right: 16),
           children: [
+            // Icons row above Schedule
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Icon(Icons.access_time, size: 30, color: Colors.black),
                 const SizedBox(width: 16),
-                Icon(Icons.notifications_none, size: 30, color: Colors.black),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsScreen(),
+                      ),
+                    );
+                  },
+                  child: Icon(Icons.notifications_none, size: 30, color: Colors.black),
+                ),
               ],
             ),
+            // Schedule title
             Text('Schedule', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26)),
             const SizedBox(height: 24),
+            // Today + date in one line
             Row(
               children: [
                 Text('Today', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -56,87 +69,81 @@ class ScheduleScreen extends StatelessWidget {
     );
   }
 }
+
 class _ScheduleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => EventDetailScreen()),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[300]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('ивент от дебатного клуба', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                      const SizedBox(height: 4),
-                      Row(), 
-                    ],
-                  ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('ивент от дебатного клуба', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    const SizedBox(height: 4),
+                    Row(
+                      
+                    ),
+                  ],
                 ),
-                Icon(Icons.more_horiz, color: Colors.grey[400]),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: Colors.grey[600], size: 18),
-                const SizedBox(width: 6),
-                Text('July 23', style: TextStyle(fontSize: 15)),
-                const SizedBox(width: 16),
-                Icon(Icons.access_time, color: Colors.blue, size: 18),
-                const SizedBox(width: 4),
-                Text('10:00', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-                const SizedBox(width: 4),
-                Text('60 min', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Divider(height: 24, color: Colors.grey[200]),
-            Row(
-              children: [
-                Icon(Icons.star, color: Colors.amber, size: 18),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    '"Debate Club" — встреча клуба для обсуждения актуальных тем, развития навыков аргументации и публичных выступлений.',
-                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                  ),
+              ),
+              Icon(Icons.more_horiz, color: Colors.grey[400]),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.calendar_today, color: Colors.grey[600], size: 18),
+              const SizedBox(width: 6),
+              Text('July 23', style: TextStyle(fontSize: 15)),
+              const SizedBox(width: 16),
+              Icon(Icons.access_time, color: Colors.blue, size: 18),
+              const SizedBox(width: 4),
+              Text('10:00', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+              const SizedBox(width: 4),
+              Text('60 min', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Divider(height: 24, color: Colors.grey[200]),
+          Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber, size: 18),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  '"Debate Club" — встреча клуба для обсуждения актуальных тем, развития навыков аргументации и публичных выступлений.',
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
-
 
 class _NoClassCard extends StatelessWidget {
   @override

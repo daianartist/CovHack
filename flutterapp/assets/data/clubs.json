@@ -1,0 +1,57 @@
+{
+  "clubs": [
+    {
+      "id": "club_001",
+      "name": "Debate Club",
+      "description": "Debate Club is an association of people who want to improve their public speaking, argumentation and critical thinking skills. Club members believe that at the beginning of a debate, they gradually expand on different points of view using logical arguments, facts and research.",
+      "logo": "https://example.com/logos/debate-club.png",
+      "logoColor": "#8B7CB6",
+      "logoIcon": "auto_awesome",
+      "stats": {
+        "posts": 23,
+        "followers": 227,
+        "members": 6
+      },
+      "category": "Education",
+      "tags": ["debate", "public-speaking", "critical-thinking"],
+      "createdAt": "2023-09-15T10:00:00Z",
+      "isActive": true,
+      "admins": ["user_002"],
+      "moderators": ["user_003", "user_004"]
+    },
+    {
+      "id": "club_002",
+      "name": "Fitness Club",
+      "description": "A community focused on health, wellness, and physical fitness activities.",
+      "logo": "https://example.com/logos/fitness-club.png",
+      "logoColor": "#FF6B6B",
+      "logoIcon": "fitness_center",
+      "stats": {
+        "posts": 45,
+        "followers": 156,
+        "members": 12
+      },
+      "category": "Health & Fitness",
+      "tags": ["fitness", "wellness", "health"],
+      "createdAt": "2023-08-20T14:30:00Z",
+      "isActive": true
+    },
+    {
+      "id": "club_003",
+      "name": "Music Lovers",
+      "description": "For those who appreciate all genres of music and love to share their passion.",
+      "logo": "https://example.com/logos/music-club.png",
+      "logoColor": "#9B59B6",
+      "logoIcon": "music_note",
+      "stats": {
+        "posts": 67,
+        "followers": 89,
+        "members": 8
+      },
+      "category": "Arts & Culture",
+      "tags": ["music", "arts", "culture"],
+      "createdAt": "2023-07-10T09:15:00Z",
+      "isActive": true
+    }
+  ]
+}
