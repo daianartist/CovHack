@@ -10,8 +10,17 @@ from database import get_db  # You need a get_db dependency for SQLAlchemy sessi
 from auth import get_current_user
 from typing import List
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Для разработки можно оставить *, для продакшена укажите конкретные адреса
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 @app.post("/register", response_model=Token)

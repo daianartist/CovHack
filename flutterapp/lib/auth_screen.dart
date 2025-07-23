@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './widgets/social_login_buttons.dart';
+import 'services/api_service.dart';
 
 class AuthScreen extends StatefulWidget {
   final int initialTab;
@@ -16,6 +17,18 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  final _registerEmailController = TextEditingController();
+  final _registerPasswordController = TextEditingController();
+  final _registerNameController = TextEditingController();
+  String _registerRole = 'student';
+  bool _registerObscurePassword = true;
+  bool _registerIsLoading = false;
+  String? _registerErrorMessage;
+
+  final ApiService _apiService = ApiService();
+  bool _isLoading = false;
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +44,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     _tabController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _registerEmailController.dispose();
+    _registerPasswordController.dispose();
+    _registerNameController.dispose();
     super.dispose();
   }
 
@@ -212,8 +228,30 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/main');
+            onPressed: _isLoading ? null : () async {
+              setState(() {
+                _isLoading = true;
+                _errorMessage = null;
+              });
+              try {
+                await _apiService.login(
+                  _emailController.text.trim(),
+                  _passwordController.text.trim(),
+                );
+                if (mounted) {
+                  Navigator.pushReplacementNamed(context, '/main');
+                }
+              } catch (e) {
+                setState(() {
+                  _errorMessage = e.toString();
+                });
+              } finally {
+                if (mounted) {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4A90E2),
@@ -223,15 +261,31 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Sign in',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Sign in',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            _errorMessage!,
+            style: const TextStyle(color: Colors.red, fontSize: 14),
+          ),
+        ],
         
         const SizedBox(height: 32),
         
@@ -257,6 +311,34 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Name field
+        const Text(
+          'Name',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF333333),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _registerNameController,
+          decoration: InputDecoration(
+            hintText: 'Your name',
+            hintStyle: const TextStyle(color: Color(0xFF999999)),
+            filled: true,
+            fillColor: const Color(0xFFF8F8F8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
         // Email field
         const Text(
           'Email address',
@@ -268,7 +350,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 8),
         TextField(
-          controller: _emailController,
+          controller: _registerEmailController,
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
             hintText: 'Your email',
@@ -285,9 +367,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
-        
         const SizedBox(height: 20),
-        
         // Password field
         const Text(
           'Password',
@@ -299,8 +379,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 8),
         TextField(
-          controller: _passwordController,
-          obscureText: _obscurePassword,
+          controller: _registerPasswordController,
+          obscureText: _registerObscurePassword,
           decoration: InputDecoration(
             hintText: 'Password',
             hintStyle: const TextStyle(color: Color(0xFF999999)),
@@ -316,46 +396,85 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             ),
             suffixIcon: IconButton(
               icon: Icon(
-                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                _registerObscurePassword ? Icons.visibility_off : Icons.visibility,
                 color: const Color(0xFF999999),
               ),
               onPressed: () {
                 setState(() {
-                  _obscurePassword = !_obscurePassword;
+                  _registerObscurePassword = !_registerObscurePassword;
                 });
               },
             ),
           ),
         ),
-        
-        const SizedBox(height: 12),
-        
-        // Forgot password
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () {
-              // Handle forgot password
-            },
-            child: const Text(
-              'Forgot password?',
-              style: TextStyle(
-                color: Color(0xFF666666),
-                fontSize: 14,
-              ),
+        const SizedBox(height: 20),
+        // Role dropdown
+        const Text(
+          'Role',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF333333),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _registerRole,
+          items: const [
+            DropdownMenuItem(value: 'student', child: Text('Student')),
+            DropdownMenuItem(value: 'moderator', child: Text('Moderator')),
+            DropdownMenuItem(value: 'admin', child: Text('Admin')),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _registerRole = value ?? 'student';
+            });
+          },
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFFF8F8F8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
             ),
           ),
         ),
-        
         const SizedBox(height: 20),
-        
-        // Sign in button
+        // Sign up button
         SizedBox(
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/main');
+            onPressed: _registerIsLoading ? null : () async {
+              setState(() {
+                _registerIsLoading = true;
+                _registerErrorMessage = null;
+              });
+              try {
+                await _apiService.register(
+                  _registerNameController.text.trim(),
+                  _registerEmailController.text.trim(),
+                  _registerPasswordController.text.trim(),
+                  _registerRole,
+                );
+                if (mounted) {
+                  Navigator.pushReplacementNamed(context, '/main');
+                }
+              } catch (e) {
+                setState(() {
+                  _registerErrorMessage = e.toString();
+                });
+              } finally {
+                if (mounted) {
+                  setState(() {
+                    _registerIsLoading = false;
+                  });
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4A90E2),
@@ -365,18 +484,32 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Register',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: _registerIsLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Register',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ),
-        
+        if (_registerErrorMessage != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            _registerErrorMessage!,
+            style: const TextStyle(color: Colors.red, fontSize: 14),
+          ),
+        ],
         const SizedBox(height: 32),
-        
         // Social login
         const Center(
           child: Text(
@@ -387,9 +520,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
-        
         const SizedBox(height: 16),
-        
         const SocialLoginButtons(),
       ],
     );
