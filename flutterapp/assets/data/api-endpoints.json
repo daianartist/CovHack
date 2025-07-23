@@ -1,0 +1,59 @@
+{
+  "apiEndpoints": {
+    "baseUrl": "https://api.clubapp.com/v1",
+    "authentication": {
+      "type": "JWT",
+      "endpoints": {
+        "login": "POST /auth/login",
+        "register": "POST /auth/register",
+        "refresh": "POST /auth/refresh",
+        "logout": "POST /auth/logout"
+      }
+    },
+    "users": {
+      "getProfile": "GET /users/{userId}",
+      "updateProfile": "PUT /users/{userId}",
+      "getUserStats": "GET /users/{userId}/stats",
+      "getUserClubs": "GET /users/{userId}/clubs",
+      "getUserEvents": "GET /users/{userId}/events"
+    },
+    "clubs": {
+      "getAllClubs": "GET /clubs",
+      "getClub": "GET /clubs/{clubId}",
+      "createClub": "POST /clubs",
+      "updateClub": "PUT /clubs/{clubId}",
+      "joinClub": "POST /clubs/{clubId}/join",
+      "leaveClub": "DELETE /clubs/{clubId}/leave",
+      "getClubMembers": "GET /clubs/{clubId}/members",
+      "getClubPosts": "GET /clubs/{clubId}/posts"
+    },
+    "events": {
+      "getAllEvents": "GET /events",
+      "getEvent": "GET /events/{eventId}",
+      "createEvent": "POST /events",
+      "updateEvent": "PUT /events/{eventId}",
+      "registerForEvent": "POST /events/{eventId}/register",
+      "unregisterFromEvent": "DELETE /events/{eventId}/register",
+      "getEventParticipants": "GET /events/{eventId}/participants"
+    },
+    "posts": {
+      "getAllPosts": "GET /posts",
+      "getPost": "GET /posts/{postId}",
+      "createPost": "POST /posts",
+      "updatePost": "PUT /posts/{postId}",
+      "deletePost": "DELETE /posts/{postId}",
+      "likePost": "POST /posts/{postId}/like",
+      "commentOnPost": "POST /posts/{postId}/comments"
+    },
+    "leaderboard": {
+      "getGlobalLeaderboard": "GET /leaderboard/global",
+      "getClubLeaderboard": "GET /leaderboard/clubs/{clubId}",
+      "getUserRanking": "GET /leaderboard/users/{userId}"
+    },
+    "search": {
+      "searchClubs": "GET /search/clubs?q={query}",
+      "searchUsers": "GET /search/users?q={query}",
+      "searchEvents": "GET /search/events?q={query}"
+    }
+  }
+}

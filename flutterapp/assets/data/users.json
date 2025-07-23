@@ -1,0 +1,113 @@
+{
+  "users": [
+    {
+      "id": "user_001",
+      "name": "Arapbekova Daiana",
+      "avatar": "D",
+      "avatarColor": "#5B9BD5",
+      "email": "daiana.arapbekova@example.com",
+      "connections": 45,
+      "experiencePoints": 100,
+      "rating": {
+        "score": 4.8,
+        "rank": 12
+      },
+      "progress": {
+        "visitedEvents": 7,
+        "studiosVisited": 3,
+        "classesThisWeek": 1
+      },
+      "certificates": [
+        {
+          "id": "cert_001",
+          "name": "Public Speaking Mastery",
+          "issueDate": "2024-01-15",
+          "issuer": "Debate Club"
+        }
+      ],
+      "joinedClubs": ["club_001", "club_002"],
+      "country": "KZ"
+    },
+    {
+      "id": "user_002",
+      "name": "Davis Curtis",
+      "avatar": "https://example.com/avatars/davis.jpg",
+      "experiencePoints": 2569,
+      "rating": {
+        "score": 4.9,
+        "rank": 1
+      },
+      "country": "PT",
+      "countryFlag": "🇵🇹"
+    },
+    {
+      "id": "user_003",
+      "name": "Alena Donin",
+      "avatar": "https://example.com/avatars/alena.jpg",
+      "experiencePoints": 1469,
+      "rating": {
+        "score": 4.7,
+        "rank": 2
+      },
+      "country": "FR",
+      "countryFlag": "🇫🇷"
+    },
+    {
+      "id": "user_004",
+      "name": "Craig Gouse",
+      "avatar": "https://example.com/avatars/craig.jpg",
+      "experiencePoints": 1053,
+      "rating": {
+        "score": 4.6,
+        "rank": 3
+      },
+      "country": "CA",
+      "countryFlag": "🇨🇦"
+    },
+    {
+      "id": "user_005",
+      "name": "Madelyn Dias",
+      "avatar": "https://example.com/avatars/madelyn.jpg",
+      "experiencePoints": 590,
+      "rating": {
+        "score": 4.4,
+        "rank": 4
+      },
+      "country": "IN",
+      "countryFlag": "🇮🇳"
+    },
+    {
+      "id": "user_006",
+      "name": "Zain Vaccaro",
+      "avatar": "https://example.com/avatars/zain.jpg",
+      "experiencePoints": 448,
+      "rating": {
+        "score": 4.3,
+        "rank": 5
+      },
+      "country": "IT",
+      "countryFlag": "🇮🇹"
+    },
+    {
+      "id": "user_007",
+      "name": "Skylar Geidt",
+      "avatar": "https://example.com/avatars/skylar.jpg",
+      "experiencePoints": 448,
+      "rating": {
+        "score": 4.2,
+        "rank": 6
+      },
+      "country": "DE",
+      "countryFlag": "🇩🇪"
+    },
+    {
+      "id": "user_008",
+      "name": "Diana Valente Barker",
+      "avatar": "https://example.com/avatars/diana.jpg",
+      "bio": "Passionate Brazilian music lover and nutrition student! 🎵✨ Her vibrant spirit shines through her love for dance, calm melodies, and creating lasting memories.",
+      "interests": ["music", "dance", "nutrition", "wellness"],
+      "country": "BR",
+      "countryFlag": "🇧🇷"
+    }
+  ]
+}

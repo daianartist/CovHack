@@ -1,0 +1,51 @@
+{
+  "leaderboard": {
+    "type": "global",
+    "period": "monthly",
+    "lastUpdated": "2024-01-25T12:00:00Z",
+    "rankings": [
+      {
+        "rank": 1,
+        "userId": "user_002",
+        "points": 2569,
+        "change": "+15",
+        "achievements": ["top_performer", "consistent_participant"]
+      },
+      {
+        "rank": 2,
+        "userId": "user_003",
+        "points": 1469,
+        "change": "+8",
+        "achievements": ["rising_star"]
+      },
+      {
+        "rank": 3,
+        "userId": "user_004",
+        "points": 1053,
+        "change": "-2",
+        "achievements": ["veteran_member"]
+      },
+      {
+        "rank": 4,
+        "userId": "user_005",
+        "points": 590,
+        "change": "+12",
+        "achievements": ["newcomer"]
+      },
+      {
+        "rank": 5,
+        "userId": "user_006",
+        "points": 448,
+        "change": "+3",
+        "achievements": []
+      },
+      {
+        "rank": 6,
+        "userId": "user_007",
+        "points": 448,
+        "change": "0",
+        "achievements": []
+      }
+    ]
+  }
+}
