@@ -50,6 +50,126 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  void _showForgotPasswordDialog() {
+    final emailController = TextEditingController();
+    final codeController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    String? step = 'email';
+    String? error;
+    String? email;
+    String? code;
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(step == 'email' ? 'Forgot password' : 'Reset password'),
+              content: step == 'email'
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                          ),
+                        ),
+                        if (error != null) ...[
+                          const SizedBox(height: 8),
+                          Text(error!, style: const TextStyle(color: Colors.red)),
+                        ],
+                      ],
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Код отправлен на email (или выведен в ответе API)'),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: codeController,
+                          decoration: const InputDecoration(labelText: 'Code'),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: newPasswordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(labelText: 'New password'),
+                        ),
+                        if (error != null) ...[
+                          const SizedBox(height: 8),
+                          Text(error!, style: const TextStyle(color: Colors.red)),
+                        ],
+                      ],
+                    ),
+              actions: [
+                TextButton(
+                  onPressed: isLoading ? null : () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                if (step == 'email')
+                  TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            setState(() {
+                              isLoading = true;
+                              error = null;
+                            });
+                            try {
+                              final resp = await _apiService.forgotPassword(emailController.text.trim());
+                              email = emailController.text.trim();
+                              code = resp['code']; // Для теста
+                              setState(() {
+                                step = 'code';
+                                isLoading = false;
+                              });
+                            } catch (e) {
+                              setState(() {
+                                error = e.toString();
+                                isLoading = false;
+                              });
+                            }
+                          },
+                    child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Send code'),
+                  ),
+                if (step == 'code')
+                  TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            setState(() {
+                              isLoading = true;
+                              error = null;
+                            });
+                            try {
+                              await _apiService.resetPassword(
+                                email!,
+                                codeController.text.trim(),
+                                newPasswordController.text.trim(),
+                              );
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password reset successful!')));
+                            } catch (e) {
+                              setState(() {
+                                error = e.toString();
+                                isLoading = false;
+                              });
+                            }
+                          },
+                    child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Reset password'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,9 +328,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
-            onPressed: () {
-              // Handle forgot password
-            },
+            onPressed: _isLoading ? null : _showForgotPasswordDialog,
             child: const Text(
               'Forgot password?',
               style: TextStyle(

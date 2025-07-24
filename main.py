@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, Path
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from models import User, Base, Club, Event, Membership, Registration
-from schemas import UserCreate, UserLogin, Token, ClubCreate, ClubOut, EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, RegistrationOut
+from schemas import UserCreate, UserLogin, Token, ClubCreate, ClubOut, EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, RegistrationOut, ForgotPasswordRequest, ResetPasswordRequest
 from auth_utils import hash_password, verify_password
 from jwt_utils import create_access_token
 from database import get_db  # You need a get_db dependency for SQLAlchemy session
@@ -11,6 +11,10 @@ from auth import get_current_user
 from typing import List
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
+import random
+import string
+
+reset_codes = {}
 
 app = FastAPI()
 app.add_middleware(
@@ -165,3 +169,25 @@ def get_registration(registration_id: int = Path(...), db: Session = Depends(get
 @app.get("/clubs/{club_id}/events", response_model=List[EventOut])
 def get_events_by_club(club_id: int, db: Session = Depends(get_db)):
     return db.query(Event).filter(Event.club_id == club_id).all()
+
+@app.post("/forgot-password")
+def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    code = ''.join(random.choices(string.digits, k=6))
+    reset_codes[request.email] = code
+    # Здесь должен быть реальный email-отправщик, но для теста просто возвращаем код
+    return {"detail": "Reset code sent", "code": code}
+
+@app.post("/reset-password")
+def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    if reset_codes.get(request.email) != request.code:
+        raise HTTPException(status_code=400, detail="Invalid code")
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.password = hash_password(request.new_password)
+    db.commit()
+    reset_codes.pop(request.email, None)
+    return {"detail": "Password reset successful"}
