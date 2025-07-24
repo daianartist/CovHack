@@ -1,22 +1,15 @@
-# main.py
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+#!/usr/bin/env python3
+# email_api.py - Simple FastAPI server for email sending only
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from models import User, Base
-from schemas import UserCreate, UserLogin, Token
-from auth_utils import hash_password, verify_password
-from jwt_utils import create_access_token
-from database import get_db  # You need a get_db dependency for SQLAlchemy session
-from auth import get_current_user
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List
 import json
 import os
 import subprocess
 import tempfile
 
-app = FastAPI()
+app = FastAPI(title="CovHack Email API", version="1.0.0")
 
 # Add CORS middleware
 app.add_middleware(
@@ -26,8 +19,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 # Email request models
 class EmailConfig(BaseModel):
@@ -47,40 +38,26 @@ class EmailRequest(BaseModel):
     event_name: str = "CovHack"
     base_url: str = "https://certificateverifier.vercel.app/verify?code="
 
-@app.post("/register", response_model=Token)
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    # Check if user exists
-    if db.query(User).filter(User.email == user.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_pw = hash_password(user.password)
-    db_user = User(name=user.name, email=user.email, password=hashed_pw, role=user.role)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    access_token = create_access_token(data={"sub": db_user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@app.post("/login", response_model=Token)
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if not db_user or not verify_password(user.password, db_user.password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    access_token = create_access_token(data={"sub": db_user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@app.get("/me")
-def read_users_me(current_user: User = Depends(get_current_user)):
+@app.get("/")
+def root():
+    """Root endpoint"""
     return {
-        "id": current_user.id,
-        "name": current_user.name,
-        "email": current_user.email,
-        "role": current_user.role
+        "message": "CovHack Email API", 
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "send_emails": "/send-emails"
+        }
     }
 
 @app.get("/health")
 def health_check():
     """Health check endpoint for Flutter app"""
-    return {"status": "healthy", "message": "API is running"}
+    return {
+        "status": "healthy", 
+        "message": "Email API is running",
+        "email_script": os.path.exists("/Users/user1/Desktop/cert_verifier_project/send_emails.py")
+    }
 
 @app.post("/send-emails")
 def send_emails_endpoint(request: EmailRequest):
@@ -88,6 +65,8 @@ def send_emails_endpoint(request: EmailRequest):
     Send certificates via email using Python script
     """
     try:
+        print(f"📧 Received email request for {len(request.participants)} participants")
+        
         # Create temporary config file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as config_file:
             config_data = {
@@ -100,6 +79,7 @@ def send_emails_endpoint(request: EmailRequest):
             }
             json.dump(config_data, config_file, indent=2)
             config_path = config_file.name
+            print(f"📁 Config file created: {config_path}")
 
         # Create temporary participants file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as participants_file:
@@ -113,12 +93,23 @@ def send_emails_endpoint(request: EmailRequest):
             ]
             json.dump(participants_data, participants_file, indent=2)
             participants_path = participants_file.name
+            print(f"👥 Participants file created: {participants_path}")
 
         # Call Python email script
         script_path = "/Users/user1/Desktop/cert_verifier_project/send_emails.py"
+        print(f"🐍 Calling email script: {script_path}")
+        
+        # Change to correct working directory for PDF files
+        script_dir = "/Users/user1/Desktop/cert_verifier_project"
+        
         result = subprocess.run([
             "python3", script_path, config_path, participants_path
-        ], capture_output=True, text=True, timeout=60)
+        ], capture_output=True, text=True, timeout=30, cwd=script_dir)
+
+        print(f"📊 Script exit code: {result.returncode}")
+        print(f"📤 Script stdout: {result.stdout}")
+        if result.stderr:
+            print(f"❌ Script stderr: {result.stderr}")
 
         # Clean up temporary files
         os.unlink(config_path)
@@ -142,25 +133,52 @@ def send_emails_endpoint(request: EmailRequest):
                     ],
                     "failed_sends": []
                 },
-                "output": result.stdout
+                "output": result.stdout,
+                "debug": {
+                    "script_path": script_path,
+                    "config_data": config_data,
+                    "participants_count": len(request.participants)
+                }
             }
         else:
             return {
                 "success": False,
                 "message": "Email sending failed",
                 "error": result.stderr,
-                "help": "Check your SMTP settings and App Password"
+                "output": result.stdout,
+                "help": "Check your SMTP settings and App Password",
+                "debug": {
+                    "exit_code": result.returncode,
+                    "script_path": script_path
+                }
             }
 
     except subprocess.TimeoutExpired:
+        # Clean up files if timeout
+        try:
+            os.unlink(config_path)
+            os.unlink(participants_path)
+        except:
+            pass
+            
         return {
             "success": False,
             "message": "Email sending timed out",
-            "help": "The operation took too long. Try with fewer participants."
+            "help": "The operation took too long. Try with fewer participants.",
+            "timeout": 30
         }
     except Exception as e:
+        print(f"💥 Unexpected error: {e}")
         return {
             "success": False,
             "message": f"Unexpected error: {str(e)}",
-            "help": "Please check your configuration and try again."
+            "help": "Please check your configuration and try again.",
+            "error_type": type(e).__name__
         }
+
+if __name__ == "__main__":
+    import uvicorn
+    print("🚀 Starting CovHack Email API...")
+    print("📧 Email endpoint: http://localhost:8000/send-emails")
+    print("🔍 Health check: http://localhost:8000/health")
+    uvicorn.run(app, host="0.0.0.0", port=8000)

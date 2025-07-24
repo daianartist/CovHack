@@ -32,7 +32,7 @@ class _CertificateGeneratorScreenState extends State<CertificateGeneratorScreen>
     if (Platform.isIOS || Platform.isAndroid) {
       // For mobile devices, use your computer's IP address
       // IP found by running: ifconfig | grep "inet " | grep -v 127.0.0.1
-      return 'http://10.1.14.65:8000'; // Your Mac's IP address
+      return 'http://192.168.1.219:8000'; // Your Mac's IP address
     } else {
       return 'http://localhost:8000';
     }
@@ -66,19 +66,215 @@ class _CertificateGeneratorScreenState extends State<CertificateGeneratorScreen>
   }
 
   Future<void> _quickSendEmails() async {
-    // Set default config and send immediately with pre-configured settings
+    // Use FastAPI endpoint with dynamic IP detection
     setState(() {
-      _emailController.text = 'nuraiym.kuandyk@gmail.com';
-      _passwordController.text = 'svpd ebsf xtau obym'; // Correct App Password with spaces
-      _smtpServerController.text = 'smtp.gmail.com';
-      _smtpPortController.text = '587';
+      _isSendingEmails = true;
     });
     
-    // Wait a moment for UI to update
-    await Future.delayed(const Duration(milliseconds: 300));
-    
-    // Send emails with pre-configured settings
-    _sendEmailsToAll();
+    try {
+      // Prepare request data
+      final requestData = {
+        'config': {
+          'email': 'nuraiym.kuandyk@gmail.com',
+          'password': 'svpd ebsf xtau obym',
+          'smtp_server': 'smtp.gmail.com',
+          'smtp_port': 587,
+        },
+        'participants': [
+          {
+            'name': 'Daiana Arapbekova',
+            'email': 'nuraiym.kuandyk@gmail.com',
+            'verification_code': '6675188059834359412',
+          },
+          {
+            'name': 'Nuraiym Arapbekova',
+            'email': 'nuraiym.kuandyk@gmail.com',
+            'verification_code': '389085058455370704',
+          },
+        ],
+        'event_name': 'CovHack',
+        'base_url': 'https://certificateverifier.vercel.app/verify?code=',
+      };
+
+      // Send POST request to FastAPI
+      final response = await http.post(
+        Uri.parse('$apiUrl/send-emails'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(requestData),
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = json.decode(response.body);
+        
+        // Show success dialog
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Column(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 50,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '🎉 Emails Sent Successfully!',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              content: Container(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.green.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.email, color: Colors.green, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Delivered: ${result['successful'] ?? 2} certificates',
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.person, color: Colors.green, size: 20),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Recipients: Daiana & Nuraiym',
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.verified, color: Colors.green, size: 20),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Status: All certificates delivered',
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'PDF certificates with QR codes have been sent to all participants. They can verify their certificates using the links provided.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                Container(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      '🎊 Awesome!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        // Show error dialog
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('❌ Error'),
+              content: Text('Failed to send emails:\nStatus: ${response.statusCode}\n\n${response.body}'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Show exception dialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('❌ Connection Error'),
+            content: Text('Cannot connect to email server:\n\n$e\n\nMake sure the API server is running at: $apiUrl'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isSendingEmails = false;
+      });
+    }
   }
 
   @override
@@ -95,7 +291,7 @@ class _CertificateGeneratorScreenState extends State<CertificateGeneratorScreen>
     setState(() {
       _isCSVUploaded = true;
       _csvData = [
-        {'name': 'Daiana Arapbekova', 'email': 'daianaarapbekova@gmail.com'},
+        {'name': 'Daiana Arapbekova', 'email': 'nuraiym.kuandyk@gmail.com'},
         {'name': 'Nuraiym Arapbekova', 'email': 'nuraiym.kuandyk@gmail.com'},
         {'name': 'Alex Johnson', 'email': 'alex.johnson@example.com'},
         {'name': 'Sarah Wilson', 'email': 'sarah.wilson@example.com'},
