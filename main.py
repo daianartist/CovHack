@@ -13,6 +13,7 @@ from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 import random
 import string
+import os
 
 reset_codes = {}
 
@@ -170,14 +171,21 @@ def get_registration(registration_id: int = Path(...), db: Session = Depends(get
 def get_events_by_club(club_id: int, db: Session = Depends(get_db)):
     return db.query(Event).filter(Event.club_id == club_id).all()
 
+
 @app.post("/forgot-password")
 def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == request.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
     code = ''.join(random.choices(string.digits, k=6))
     reset_codes[request.email] = code
-    # Здесь должен быть реальный email-отправщик, но для теста просто возвращаем код
+
+    # Логируем код в файл
+    log_path = os.path.join(os.getcwd(), "reset_codes_log.txt")
+    with open(log_path, "a") as f:
+        f.write(f"{request.email}: {code}\n")
+
     return {"detail": "Reset code sent", "code": code}
 
 @app.post("/reset-password")

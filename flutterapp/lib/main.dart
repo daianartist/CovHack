@@ -6,6 +6,8 @@ import 'home_screen.dart';
 import 'search_screen.dart';
 import 'schedule_screen.dart';
 import 'profile_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/reset_password_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +41,14 @@ class CoventryUniversityApp extends StatelessWidget {
           return AuthScreen(initialTab: initialTab);
         },
         '/main': (context) => const MainScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/reset-password': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments;
+          if (args is Map && args.containsKey('email')) {
+            return ResetPasswordScreen(email: args['email'], code: args['code']);
+          }
+          return const ForgotPasswordScreen();
+        },
       },
     );
   }

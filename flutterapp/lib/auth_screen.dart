@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './widgets/social_login_buttons.dart';
 import 'services/api_service.dart';
+import 'screens/forgot_password_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   final int initialTab;
@@ -328,7 +329,16 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
-            onPressed: _isLoading ? null : _showForgotPasswordDialog,
+            onPressed: _isLoading
+                ? null
+                : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
             child: const Text(
               'Forgot password?',
               style: TextStyle(
