@@ -21,6 +21,8 @@ class ClubCreate(BaseModel):
     description: Optional[str] = None
     author_id: int
     form_link: Optional[str] = None
+    sheet_id: Optional[str] = None
+    range_name: Optional[str] = None
 
 class ClubOut(ClubCreate):
     id: int
@@ -61,6 +63,15 @@ class RegistrationCreate(BaseModel):
 
 class RegistrationOut(RegistrationCreate):
     id: int
+
+    class Config:
+        orm_mode = True
+
+class UserOut(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    role: str
 
     class Config:
         orm_mode = True
