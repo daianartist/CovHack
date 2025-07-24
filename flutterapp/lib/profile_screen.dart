@@ -2,9 +2,44 @@ import 'package:flutter/material.dart';
 import 'ranking.dart';
 import 'notifications_screen.dart';
 import 'certificates.dart';
+import 'services/api_service.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? _user;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final user = await ApiService().getMe();
+      setState(() {
+        _user = user;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,34 +66,42 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFF7F8FC),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildProfileHeader(),
-            const SizedBox(height: 24),
-            _buildInfoCard(
-              title: 'Certificate',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CertificatesScreen(),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text('Error: $_error'))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      _buildProfileHeader(),
+                      const SizedBox(height: 24),
+                      _buildInfoCard(
+                        title: 'Certificate',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CertificatesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildStatsRow(context),
+                      const SizedBox(height: 24),
+                      _buildProgressCard(),
+                    ],
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildStatsRow(context),
-            const SizedBox(height: 24),
-            _buildProgressCard(),
-          ],
-        ),
-      ),
+                ),
     );
   }
 
   Widget _buildProfileHeader() {
+    final name = _user?['name'] ?? '';
+    final email = _user?['email'] ?? '';
+    final role = _user?['role'] ?? '';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -67,21 +110,31 @@ class ProfileScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 36,
-            backgroundColor: Color(0xFF5A96E3),
+            backgroundColor: const Color(0xFF5A96E3),
             child: Text(
-              'D',
-              style: TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold),
+              initial,
+              style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Zhaksylykova Daiana',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+              Text(
+                name,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                email,
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                role.toString().toUpperCase(),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF5A96E3), fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               ActionChip(
