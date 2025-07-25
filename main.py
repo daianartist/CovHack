@@ -3,19 +3,13 @@ from fastapi import FastAPI, Depends, HTTPException, Path
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from models import User, Base, Club, Event, Membership, Registration
-from schemas import UserCreate, UserLogin, Token, ClubCreate, ClubOut, EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, RegistrationOut, ForgotPasswordRequest, ResetPasswordRequest
+from schemas import UserCreate, UserLogin, Token, ClubCreate, ClubOut, EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, RegistrationOut
 from auth_utils import hash_password, verify_password
 from jwt_utils import create_access_token
 from database import get_db  # You need a get_db dependency for SQLAlchemy session
 from auth import get_current_user
-from typing import List
+from typing import List, Optional
 from datetime import datetime
-from fastapi.middleware.cors import CORSMiddleware
-import random
-import string
-import os
-
-reset_codes = {}
 
 app = FastAPI()
 app.add_middleware(
@@ -52,7 +46,7 @@ def login(
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.get("/me")
+@app.get("/me", response_model=UserOut)
 def read_users_me(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,
@@ -83,10 +77,12 @@ def get_club(club_id: int = Path(...), db: Session = Depends(get_db)):
     return club
 
 @app.put("/clubs/{club_id}", response_model=ClubOut)
-def update_club(club_id: int, club: ClubCreate, db: Session = Depends(get_db)):
+def update_club(club_id: int, club: ClubCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     db_club = db.query(Club).filter(Club.id == club_id).first()
     if not db_club:
         raise HTTPException(status_code=404, detail="Club not found")
+    if db_club.author_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to update this club")
     for key, value in club.dict().items():
         setattr(db_club, key, value)
     db.commit()
@@ -94,10 +90,12 @@ def update_club(club_id: int, club: ClubCreate, db: Session = Depends(get_db)):
     return db_club
 
 @app.delete("/clubs/{club_id}")
-def delete_club(club_id: int, db: Session = Depends(get_db)):
+def delete_club(club_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     db_club = db.query(Club).filter(Club.id == club_id).first()
     if not db_club:
         raise HTTPException(status_code=404, detail="Club not found")
+    if db_club.author_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to delete this club")
     db.delete(db_club)
     db.commit()
     return {"detail": "Club deleted"}
@@ -105,7 +103,12 @@ def delete_club(club_id: int, db: Session = Depends(get_db)):
 ### **Events**
 
 @app.post("/events/", response_model=EventOut)
-def create_event(event: EventCreate, db: Session = Depends(get_db)):
+def create_event(event: EventCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_club = db.query(Club).filter(Club.id == event.club_id).first()
+    if not db_club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    if db_club.author_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to create event for this club")
     db_event = Event(**event.dict())
     db.add(db_event)
     db.commit()
@@ -126,7 +129,10 @@ def get_event(event_id: int = Path(...), db: Session = Depends(get_db)):
 ### **Memberships**
 
 @app.post("/memberships/", response_model=MembershipOut)
-def create_membership(membership: MembershipCreate, db: Session = Depends(get_db)):
+def create_membership(membership: MembershipCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Only allow users to request membership for themselves
+    if membership.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to create membership for another user")
     db_membership = Membership(**membership.dict())
     db.add(db_membership)
     db.commit()
@@ -143,6 +149,19 @@ def get_membership(membership_id: int = Path(...), db: Session = Depends(get_db)
     if not membership:
         raise HTTPException(status_code=404, detail="Membership not found")
     return membership
+
+@app.put("/memberships/{membership_id}/status", response_model=MembershipOut)
+def update_membership_status(membership_id: int, status: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_membership = db.query(Membership).filter(Membership.id == membership_id).first()
+    if not db_membership:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    db_club = db.query(Club).filter(Club.id == db_membership.club_id).first()
+    if db_club.author_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to update membership for this club")
+    db_membership.status = status
+    db.commit()
+    db.refresh(db_membership)
+    return db_membership
 
 ### **Registrations**
 
@@ -170,32 +189,3 @@ def get_registration(registration_id: int = Path(...), db: Session = Depends(get
 @app.get("/clubs/{club_id}/events", response_model=List[EventOut])
 def get_events_by_club(club_id: int, db: Session = Depends(get_db)):
     return db.query(Event).filter(Event.club_id == club_id).all()
-
-
-@app.post("/forgot-password")
-def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == request.email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    code = ''.join(random.choices(string.digits, k=6))
-    reset_codes[request.email] = code
-
-    # Логируем код в файл
-    log_path = os.path.join(os.getcwd(), "reset_codes_log.txt")
-    with open(log_path, "a") as f:
-        f.write(f"{request.email}: {code}\n")
-
-    return {"detail": "Reset code sent", "code": code}
-
-@app.post("/reset-password")
-def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
-    if reset_codes.get(request.email) != request.code:
-        raise HTTPException(status_code=400, detail="Invalid code")
-    user = db.query(User).filter(User.email == request.email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    user.password = hash_password(request.new_password)
-    db.commit()
-    reset_codes.pop(request.email, None)
-    return {"detail": "Password reset successful"}

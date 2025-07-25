@@ -34,6 +34,8 @@ class Club(Base):
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     form_link = Column(String)
+    sheet_id = Column(String, nullable=True)
+    range_name = Column(String, nullable=True)
 
     author = relationship("User")
     memberships = relationship("Membership", back_populates="club")
