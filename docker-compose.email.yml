@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  email-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.email
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+    volumes:
+      - ./cert_verifier_project:/app/certs:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add certificate generation service
+  cert-generator:
+    build:
+      context: ./cert_verifier_project
+      dockerfile: Dockerfile
+    volumes:
+      - ./cert_verifier_project:/app
+    command: python generate_cert/generate.py
+    depends_on:
+      - email-api
