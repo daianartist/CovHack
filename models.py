@@ -30,12 +30,13 @@ class Club(Base):
     __tablename__ = "clubs"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    description = Column(Text)
+    description = Column(Text, nullable=True)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    form_link = Column(String)
+    form_link = Column(String, nullable=True)
     sheet_id = Column(String, nullable=True)
     range_name = Column(String, nullable=True)
+    questionnaire_url = Column(String, nullable=True)
 
     author = relationship("User")
     memberships = relationship("Membership", back_populates="club")

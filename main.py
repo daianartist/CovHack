@@ -12,6 +12,24 @@ from typing import List, Optional
 from datetime import datetime
 from sheets_utils import get_sheet_responses
 from googleapiclient.errors import HttpError
+import csv
+from fastapi.responses import StreamingResponse
+from io import StringIO
+import time
+from models import UserRole
+
+_cache = {}
+_cache_expiry = {}
+
+def get_sheet_responses_cached(sheet_id, range_name):
+    key = (sheet_id, range_name)
+    now = time.time()
+    if key in _cache and now < _cache_expiry[key]:
+        return _cache[key]
+    data = get_sheet_responses(sheet_id, range_name)
+    _cache[key] = data
+    _cache_expiry[key] = now + 600  # Cache for 10 minutes
+    return data
 
 app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -52,8 +70,22 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 ### **Clubs**
 
 @app.post("/clubs/", response_model=ClubOut)
-def create_club(club: ClubCreate, db: Session = Depends(get_db)):
-    db_club = Club(**club.dict())
+def create_club(
+    club: ClubCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    print("Current user role:", current_user.role, type(current_user.role))
+    if current_user.role != UserRole.admin:
+        raise HTTPException(status_code=403, detail="Only admins can create clubs")
+    db_club = Club(
+        name=club.name,
+        description=club.description,
+        author_id=current_user.id,
+        form_link=club.form_link,
+        sheet_id=club.sheet_id,
+        range_name=club.range_name
+    )
     db.add(db_club)
     db.commit()
     db.refresh(db_club)
@@ -207,7 +239,36 @@ def get_club_applications(
     if not club.sheet_id or not club.range_name:
         raise HTTPException(status_code=400, detail="Sheet info not set for this club")
     try:
-        responses = get_sheet_responses(club.sheet_id, club.range_name)
+        responses = get_sheet_responses_cached(club.sheet_id, club.range_name)
     except HttpError as e:
         raise HTTPException(status_code=502, detail=f"Google Sheets error: {e}")
     return {"responses": responses}
+
+@app.get("/clubs/{club_id}/applications/csv")
+def get_club_applications_csv(
+    club_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club or (club.author_id != current_user.id and current_user.role != "admin"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if not club.sheet_id or not club.range_name:
+        raise HTTPException(status_code=400, detail="Sheet info not set for this club")
+    try:
+        responses = get_sheet_responses_cached(club.sheet_id, club.range_name)
+    except HttpError as e:
+        raise HTTPException(status_code=502, detail=f"Google Sheets error: {e}")
+    si = StringIO()
+    writer = csv.writer(si)
+    for row in responses:
+        writer.writerow(row)
+    si.seek(0)
+    return StreamingResponse(si, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=applications.csv"})
+
+@app.get("/clubs/{club_id}/questionnaire/url")
+def get_club_questionnaire_url(club_id: int, db: Session = Depends(get_db)):
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    return {"questionnaire_url": club.questionnaire_url}
