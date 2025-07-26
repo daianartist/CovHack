@@ -12,6 +12,19 @@ services:
     depends_on:
       - db
 
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+
   db:
     image: postgres:15
     restart: always

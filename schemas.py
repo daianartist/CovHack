@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
 
 class UserCreate(BaseModel):
@@ -82,3 +82,45 @@ class ResetPasswordRequest(BaseModel):
     email: EmailStr
     code: str
     new_password: str
+
+class PostCreate(BaseModel):
+    description: str
+    image_url: Optional[str] = None
+    event_id: Optional[int] = None
+
+class PostOut(PostCreate):
+    id: int
+    club_id: int
+    author_id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class PollCreate(BaseModel):
+    question: str
+    options: List[str]
+
+class PollVote(BaseModel):
+    option: str
+
+class PollOut(PollCreate):
+    id: int
+    club_id: int
+    author_id: int
+    votes: Dict[str, List[int]]
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class PollResults(BaseModel):
+    poll_id: int
+    question: str
+    options: List[str]
+    votes: Dict[str, List[int]]
+    total_votes: int
+    results: Dict[str, int]  # option -> vote count
+
+    class Config:
+        orm_mode = True

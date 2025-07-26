@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, DateTime, ForeignKey, Enum, Boolean, Text
+    Column, Integer, String, DateTime, ForeignKey, Enum, Boolean, Text, JSON
 )
 from sqlalchemy.orm import relationship, declarative_base
 import enum
@@ -41,6 +41,8 @@ class Club(Base):
     author = relationship("User")
     memberships = relationship("Membership", back_populates="club")
     events = relationship("Event", back_populates="club")
+    posts = relationship("Post", back_populates="club")
+    polls = relationship("Poll", back_populates="club")
 
 class Event(Base):
     __tablename__ = "events"
@@ -74,3 +76,30 @@ class Registration(Base):
 
     user = relationship("User", back_populates="events")
     event = relationship("Event", back_populates="registrations")
+
+class Post(Base):
+    __tablename__ = "posts"
+    id = Column(Integer, primary_key=True, index=True)
+    club_id = Column(Integer, ForeignKey("clubs.id"), nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    description = Column(Text, nullable=False)
+    image_url = Column(String, nullable=True)
+    event_id = Column(Integer, ForeignKey("events.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    club = relationship("Club", back_populates="posts")
+    author = relationship("User")
+    event = relationship("Event")
+
+class Poll(Base):
+    __tablename__ = "polls"
+    id = Column(Integer, primary_key=True, index=True)
+    club_id = Column(Integer, ForeignKey("clubs.id"), nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    question = Column(String, nullable=False)
+    options = Column(JSON, nullable=False)  # List of strings
+    votes = Column(JSON, nullable=False, default=dict)  # Dict: option -> list of user_ids
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    club = relationship("Club", back_populates="polls")
+    author = relationship("User")
