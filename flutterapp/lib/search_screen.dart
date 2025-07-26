@@ -13,72 +13,72 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedCategory = 'Все';
+  String _selectedCategory = 'All';
   
   final List<String> _categories = [
-    'Все',
-    'Спорт',
-    'Искусство',
-    'Наука',
-    'Технологии',
-    'Музыка',
-    'Дебаты',
-    'Языки',
+    'All',
+    'Sports',
+    'Arts',
+    'Science',
+    'Technology',
+    'Music',
+    'Debates',
+    'Languages',
   ];
 
   final List<Map<String, dynamic>> _clubs = [
     {
       'name': 'Debate Club',
-      'category': 'Дебаты',
+      'category': 'Debates',
       'members': 342,
       'image': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-SJUtoF2l3LlpUsvNH1srr25P0F8g2w.png',
       'color': Color(0xFF1E3A8A),
-      'description': 'Клуб дебатов и публичных выступлений',
+      'description': 'Debate club and public speaking',
       'isJoined': false,
     },
     {
       'name': 'Tech Innovators',
-      'category': 'Технологии',
+      'category': 'Technology',
       'members': 156,
       'image': null,
       'color': Color(0xFF059669),
-      'description': 'Инновации и новые технологии',
+      'description': 'Innovation and new technologies',
       'isJoined': true,
     },
     {
       'name': 'Music Society',
-      'category': 'Музыка',
+      'category': 'Music',
       'members': 234,
       'image': null,
       'color': Color(0xFFDC2626),
-      'description': 'Музыкальное общество университета',
+      'description': 'University music community',
       'isJoined': false,
     },
     {
       'name': 'Art & Design',
-      'category': 'Искусство',
+      'category': 'Arts',
       'members': 189,
       'image': null,
       'color': Color(0xFF7C3AED),
-      'description': 'Творчество и дизайн',
+      'description': 'Creativity and design',
       'isJoined': false,
     },
     {
       'name': 'Sports Club',
-      'category': 'Спорт',
+      'category': 'Sports',
       'members': 287,
       'image': null,
       'color': Color(0xFFEA580C),
-      'description': 'Спортивные мероприятия',
+      'description': 'Sports activities and events',
       'isJoined': true,
     },
     {
       'name': 'Science Lab',
-      'category': 'Наука',
+      'category': 'Science',
       'members': 198,
       'image': null,
       'color': Color(0xFF0891B2),
-      'description': 'Научные исследования',
+      'description': 'Scientific research and discovery',
       'isJoined': false,
     },
   ];
@@ -87,7 +87,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return _clubs.where((club) {
       final matchesSearch = club['name'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
                            club['description'].toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCategory = _selectedCategory == 'Все' || club['category'] == _selectedCategory;
+      final matchesCategory = _selectedCategory == 'All' || club['category'] == _selectedCategory;
       return matchesSearch && matchesCategory;
     }).toList();
   }
@@ -102,7 +102,7 @@ class _SearchScreenState extends State<SearchScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
         title: const Text(
-          'Поиск клубов',
+          'Search Clubs',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -180,7 +180,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       });
                     },
                     decoration: InputDecoration(
-                      hintText: 'Поиск клубов...',
+                      hintText: 'Search clubs...',
                       hintStyle: TextStyle(color: Colors.grey[500]),
                       prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[600], size: 24),
                       suffixIcon: _searchQuery.isNotEmpty
@@ -256,7 +256,7 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Row(
                 children: [
                   Text(
-                    'Найдено ${_filteredClubs.length} ${_getClubsText(_filteredClubs.length)}',
+                    'Found ${_filteredClubs.length} ${_getClubsText(_filteredClubs.length)}',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 14,
@@ -264,17 +264,17 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   ),
                   const Spacer(),
-                  if (_searchQuery.isNotEmpty || _selectedCategory != 'Все')
+                  if (_searchQuery.isNotEmpty || _selectedCategory != 'All')
                     TextButton.icon(
                       onPressed: () {
                         _searchController.clear();
                         setState(() {
                           _searchQuery = '';
-                          _selectedCategory = 'Все';
+                          _selectedCategory = 'All';
                         });
                       },
                       icon: const Icon(Icons.clear_all_rounded, size: 18),
-                      label: const Text('Очистить'),
+                      label: const Text('Clear'),
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF3B82F6),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -303,9 +303,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   String _getClubsText(int count) {
-    if (count == 1) return 'клуб';
-    if (count >= 2 && count <= 4) return 'клуба';
-    return 'клубов';
+    if (count == 1) return 'club';
+    return 'clubs';
   }
 
   Widget _buildEmptyState() {
@@ -330,8 +329,8 @@ class _SearchScreenState extends State<SearchScreen> {
             const SizedBox(height: 24),
             Text(
               _searchQuery.isNotEmpty 
-                  ? 'Клубы не найдены'
-                  : 'Выберите категорию',
+                  ? 'No clubs found'
+                  : 'Select category',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -341,26 +340,26 @@ class _SearchScreenState extends State<SearchScreen> {
             const SizedBox(height: 8),
             Text(
               _searchQuery.isNotEmpty
-                  ? 'Попробуйте изменить поисковый запрос'
-                  : 'Используйте фильтры для поиска интересных клубов',
+                  ? 'Try changing your search query'
+                  : 'Use filters to find interesting clubs',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
               ),
               textAlign: TextAlign.center,
             ),
-            if (_searchQuery.isNotEmpty || _selectedCategory != 'Все') ...[
+            if (_searchQuery.isNotEmpty || _selectedCategory != 'All') ...[
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () {
                   _searchController.clear();
                   setState(() {
                     _searchQuery = '';
-                    _selectedCategory = 'Все';
+                    _selectedCategory = 'All';
                   });
                 },
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Показать все клубы'),
+                label: const Text('Show all clubs'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3B82F6),
                   foregroundColor: Colors.white,
@@ -445,7 +444,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   children: [
                     Row(
                       children: [
-                        Expanded(
+                        Flexible(
                           child: Text(
                             club['name'],
                             style: const TextStyle(
@@ -453,8 +452,10 @@ class _SearchScreenState extends State<SearchScreen> {
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 8),
                         if (club['isJoined'])
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -463,7 +464,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Text(
-                              'Участник',
+                              'Member',
                               style: TextStyle(
                                 color: Colors.green,
                                 fontSize: 10,
@@ -492,12 +493,15 @@ class _SearchScreenState extends State<SearchScreen> {
                           color: Colors.grey[500],
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          '${club['members']} участников',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                            fontWeight: FontWeight.w500,
+                        Flexible(
+                          child: Text(
+                            '${club['members']}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -524,60 +528,26 @@ class _SearchScreenState extends State<SearchScreen> {
               
               const SizedBox(width: 12),
               
-              // Action Button
-              club['isJoined']
-                  ? IconButton(
-                      onPressed: () {
-                        // Открыть клуб
-                        if (club['name'] == 'Debate Club') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const EventAccountScreen(),
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.arrow_forward_ios_rounded),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.grey[100],
-                        foregroundColor: Colors.grey[600],
-                        padding: const EdgeInsets.all(12),
+              // Action Button - Always show arrow
+              IconButton(
+                onPressed: () {
+                  // Navigate to club
+                  if (club['name'] == 'Debate Club') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EventAccountScreen(),
                       ),
-                    )
-                  : ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          club['isJoined'] = true;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Вы присоединились к клубу "${club['name']}"'),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3B82F6),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Вступить',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.arrow_forward_ios_rounded),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B82F6).withOpacity(0.1),
+                  foregroundColor: const Color(0xFF3B82F6),
+                  padding: const EdgeInsets.all(12),
+                ),
+              ),
             ],
           ),
         ),

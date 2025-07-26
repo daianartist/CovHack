@@ -109,8 +109,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           // Инструкции
           _buildInstructions(),
           
-          // Нижние кнопки
-          _buildBottomControls(),
+       
         ],
       ),
     );
@@ -141,23 +140,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
               color: Colors.white24,
             ),
             const SizedBox(height: 20),
-            // Демо-кнопка для тестирования
-            ElevatedButton(
-              onPressed: () => _onQrDetected('https://coventry.ac.uk/event/123456'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6).withOpacity(0.8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text(
-                'Демо: Симулировать сканирование',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                ),
-              ),
-            ),
+        
           ],
         ),
       ),
@@ -324,74 +307,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     );
   }
 
-  Widget _buildBottomControls() {
-    return Positioned(
-      bottom: 100,
-      left: 0,
-      right: 0,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // Кнопка галереи
-          _buildControlButton(
-            icon: Icons.photo_library_outlined,
-            label: 'Галерея',
-            onTap: () {
-              // Открыть галерею для выбора QR кода
-              HapticFeedback.lightImpact();
-            },
-          ),
-          
-          // Кнопка ручного ввода
-          _buildControlButton(
-            icon: Icons.keyboard_outlined,
-            label: 'Ввести код',
-            onTap: () {
-              _showManualInputDialog();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildControlButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.black45,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white24),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  
   Widget _buildResultBottomSheet(String qrData) {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -510,56 +426,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     );
   }
 
-  void _showManualInputDialog() {
-    final controller = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text(
-          'Ввести код вручную',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: 'Введите QR код или ссылку',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                Navigator.pop(context);
-                _onQrDetected(controller.text);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Готово',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  
 }
 
 class _CornerWidget extends StatelessWidget {

@@ -32,7 +32,7 @@ class _EventAccountScreenState extends State<EventAccountScreen>
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              expandedHeight: 280,
+              expandedHeight: 180, // Уменьшенная высота
               floating: false,
               pinned: true,
               backgroundColor: Colors.white,
@@ -41,84 +41,121 @@ class _EventAccountScreenState extends State<EventAccountScreen>
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(
                   Icons.arrow_back_rounded,
-                  color: Colors.black,
+                  color: Colors.white,
                 ),
               ),
-              actions: [
-                IconButton(
-                  onPressed: () {
-                    // Share functionality
-                  },
-                  icon: const Icon(
-                    Icons.share_rounded,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
+             
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFF3B82F6),
-                        Color(0xFF1E40AF),
-                      ],
+                    image: DecorationImage(
+                      image: AssetImage('assets/logo_covuni.png'), // Фоновое изображение
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  child: SafeArea(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 40),
-                        // Club Avatar
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 3,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.4),
+                          Colors.black.withOpacity(0.6),
+                          Colors.black.withOpacity(0.8),
+                        ],
+                        stops: const [0.0, 0.7, 1.0],
+                      ),
+                    ),
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Profile Image (слева)
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 3,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        blurRadius: 15,
+                                        offset: const Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipOval(
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [Color(0xFF8B7CB6), Color(0xFF6B5B95)],
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.auto_awesome_rounded,
+                                        color: Colors.white,
+                                        size: 35,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                
+                                const SizedBox(width: 16),
+                                
+                                // Club Name and Description (по центру слева)
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Debate Club',
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Public speaking & debates',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white.withOpacity(0.9),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                
+                                const SizedBox(width: 16),
+                                
+                                // Stats (справа)
+                                Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        _buildCompactStatColumn('23', 'Posts'),
+                                        const SizedBox(width: 20),
+                                        _buildCompactStatColumn('342', 'Members'),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ),
-                          child: const Icon(
-                            Icons.auto_awesome_rounded,
-                            color: Colors.white,
-                            size: 50,
-                          ),
+                            const SizedBox(height: 16),
+                          ],
                         ),
-                        const SizedBox(height: 20),
-                        // Club Name
-                        const Text(
-                          'Debate Club',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Club Info
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Public club • 120 members',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -190,34 +227,7 @@ class _EventAccountScreenState extends State<EventAccountScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            // Share functionality
-                          },
-                          icon: const Icon(
-                            Icons.share_rounded,
-                            color: Color(0xFF3B82F6),
-                            size: 20,
-                          ),
-                          label: const Text(
-                            'Share',
-                            style: TextStyle(
-                              color: Color(0xFF3B82F6),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF3B82F6)),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                      ),
+                      
                     ],
                   ),
                 ],
@@ -446,30 +456,6 @@ class _EventAccountScreenState extends State<EventAccountScreen>
                     color: Colors.grey[700],
                     height: 1.5,
                   ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Interaction buttons
-                Row(
-                  children: [
-                    _buildInteractionButton(
-                      icon: Icons.favorite_outline_rounded,
-                      label: '24',
-                      onTap: () {},
-                    ),
-                    const SizedBox(width: 24),
-                    _buildInteractionButton(
-                      icon: Icons.chat_bubble_outline_rounded,
-                      label: '8',
-                      onTap: () {},
-                    ),
-                    const SizedBox(width: 24),
-                    _buildInteractionButton(
-                      icon: Icons.share_rounded,
-                      label: 'Share',
-                      onTap: () {},
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -870,32 +856,28 @@ class _EventAccountScreenState extends State<EventAccountScreen>
     );
   }
 
-  Widget _buildInteractionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: Colors.grey[600],
-            size: 20,
+  Widget _buildCompactStatColumn(String number, String label) {
+    return Column(
+      children: [
+        Text(
+          number,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.9),
+            fontWeight: FontWeight.w500,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+
 } 
