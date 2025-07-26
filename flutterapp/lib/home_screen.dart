@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'event_detail_screen.dart';
 import 'notifications_screen.dart';
+import 'widgets/profile_switch_button.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
   @override
@@ -14,7 +15,7 @@ class HomeScreen extends StatelessWidget {
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
- 
+          const ProfileSwitchButton(),
           IconButton(
             icon: Icon(Icons.notifications_outlined),
             onPressed: () {
