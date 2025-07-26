@@ -877,111 +877,194 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
   }
 
   Widget _buildStatisticsTab() {
-    return Padding(
-      padding: const EdgeInsets.all(12),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
-          // Main Stats Row
-          Row(
-            children: [
-              Expanded(child: _buildStatCard('Posts', '23', Icons.article_rounded, Colors.blue)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildStatCard('Events', '12', Icons.event_rounded, Colors.green)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildStatCard('Members', '145', Icons.people_rounded, Colors.orange)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Large Engagement Card
+          // Overview Header
           Container(
-            width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blue.withOpacity(0.3),
+                  color: const Color(0xFF667EEA).withOpacity(0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
               ],
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.trending_up_rounded,
-                  color: Colors.white,
-                  size: 32,
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.analytics_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Club Analytics',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  '87%',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Engagement Rate',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Great performance this month!',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMiniStat('180', 'Total Members', Icons.people_rounded),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildMiniStat('23', 'Posts', Icons.article_rounded),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildMiniStat('12', 'Events', Icons.event_rounded),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          // Activity Chart
+          
+          const SizedBox(height: 24),
+          
+          // Engagement Section
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 25,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Recent Activity',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.trending_up_rounded,
+                        color: Color(0xFF10B981),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Engagement Rate',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            'Last 30 days',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        '+12%',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF10B981),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF3B82F6).withOpacity(0.1),
+                          const Color(0xFF3B82F6).withOpacity(0.3),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '87%',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF3B82F6),
+                            ),
+                          ),
+                          Text(
+                            'Engaged',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF3B82F6),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                _buildActivityItem('New member joined', '2 hours ago', Icons.person_add_rounded, Colors.green),
-                _buildActivityItem('Post published', '1 day ago', Icons.article_rounded, Colors.blue),
-                _buildActivityItem('Event created', '3 days ago', Icons.event_rounded, Colors.orange),
               ],
             ),
           ),
+          
+          const SizedBox(height: 24),
+          
+        
+          
+          
+          
         ],
       ),
     );
@@ -1151,51 +1234,33 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+  Widget _buildMiniStat(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Colors.white.withOpacity(0.8),
+          size: 20,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 20),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.8),
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 
@@ -1305,47 +1370,6 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(String title, String time, IconData icon, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 16),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
             ),
           ),
         ],

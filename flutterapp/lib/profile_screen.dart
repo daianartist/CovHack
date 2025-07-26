@@ -45,7 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Если ошибка API (пользователь не авторизован), показываем гостевой экран
+    // If API error (user not authorized), show guest screen
     if (_error != null) {
       return const GuestProfileScreen();
     }

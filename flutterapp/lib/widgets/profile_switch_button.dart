@@ -38,7 +38,7 @@ class _ProfileSwitchButtonState extends State<ProfileSwitchButton> {
         });
       }
     } catch (e) {
-      // Если ошибка, считаем что не организатор
+      // If error, assume not an organizer
       if (mounted) {
         setState(() {
           _isOrganizer = false;

@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   static const String baseUrl = 'http://localhost:8000';
 
-  // Регистрация пользователя
+  // User registration
   Future<Map<String, dynamic>> register(String name, String email, String password, String role) async {
     final response = await http.post(
       Uri.parse('$baseUrl/register'),
@@ -22,11 +22,11 @@ class ApiService {
       await _saveToken(data['access_token']);
       return data;
     } else {
-      throw Exception('Ошибка регистрации: ${response.body}');
+      throw Exception('Registration error: ${response.body}');
     }
   }
 
-  // Логин пользователя
+  // User login
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/login'),
@@ -41,11 +41,11 @@ class ApiService {
       await _saveToken(data['access_token']);
       return data;
     } else {
-      throw Exception('Ошибка входа: ${response.body}');
+      throw Exception('Login error: ${response.body}');
     }
   }
 
-  // Получить список клубов (пример защищённого запроса)
+  // Get clubs list (example of protected request)
   Future<List<dynamic>> getClubs() async {
     final token = await _getToken();
     final response = await http.get(
@@ -57,11 +57,11 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Ошибка получения клубов: ${response.body}');
+      throw Exception('Error getting clubs: ${response.body}');
     }
   }
 
-  // Запрос на сброс пароля (отправка кода)
+  // Password reset request (send code)
   Future<Map<String, dynamic>> forgotPassword(String email) async {
     final response = await http.post(
       Uri.parse('$baseUrl/forgot-password'),
@@ -71,11 +71,11 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Ошибка сброса пароля: ${response.body}');
+      throw Exception('Password reset error: ${response.body}');
     }
   }
 
-  // Сброс пароля по коду
+  // Password reset by code
   Future<void> resetPassword(String email, String code, String newPassword) async {
     final response = await http.post(
       Uri.parse('$baseUrl/reset-password'),
@@ -87,11 +87,11 @@ class ApiService {
       }),
     );
     if (response.statusCode != 200) {
-      throw Exception('Ошибка сброса пароля: ${response.body}');
+      throw Exception('Password reset error: ${response.body}');
     }
   }
 
-  // Получить текущего пользователя
+  // Get current user
   Future<Map<String, dynamic>> getMe() async {
     final token = await _getToken();
     final response = await http.get(
@@ -103,23 +103,23 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Ошибка получения профиля: ${response.body}');
+      throw Exception('Error getting profile: ${response.body}');
     }
   }
 
-  // Сохранить токен в SharedPreferences
+  // Save token to SharedPreferences
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('access_token', token);
   }
 
-  // Получить токен из SharedPreferences
+  // Get token from SharedPreferences
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
   }
 
-  // Выйти (удалить токен)
+  // Logout (remove token)
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');
