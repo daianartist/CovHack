@@ -15,6 +15,10 @@ class MembershipStatus(enum.Enum):
     pending = "pending"
     approved = "approved"
 
+class MembershipRole(enum.Enum):
+    member = "member"
+    moderator = "moderator"
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
@@ -37,6 +41,7 @@ class Club(Base):
     sheet_id = Column(String, nullable=True)
     range_name = Column(String, nullable=True)
     questionnaire_url = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)  # Club image/logo
 
     author = relationship("User")
     memberships = relationship("Membership", back_populates="club")
@@ -52,6 +57,7 @@ class Event(Base):
     description = Column(Text)
     club_id = Column(Integer, ForeignKey("clubs.id"), nullable=False)
     points = Column(Integer, default=0)
+    image_url = Column(String, nullable=True)  # Event image/banner
 
     club = relationship("Club", back_populates="events")
     registrations = relationship("Registration", back_populates="event")
@@ -62,6 +68,7 @@ class Membership(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     club_id = Column(Integer, ForeignKey("clubs.id"), nullable=False)
     status = Column(Enum(MembershipStatus), default=MembershipStatus.pending, nullable=False)
+    role = Column(Enum(MembershipRole), default=MembershipRole.member, nullable=False)
 
     user = relationship("User", back_populates="clubs")
     club = relationship("Club", back_populates="memberships")

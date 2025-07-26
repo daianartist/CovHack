@@ -23,6 +23,8 @@ class ClubCreate(BaseModel):
     sheet_id: Optional[str] = None
     range_name: Optional[str] = None
     questionnaire_url: Optional[str] = None
+    image_url: Optional[str] = None  # Club image/logo
+    moderator_id: Optional[int] = None  # Optional moderator (president)
 
 class ClubOut(ClubCreate):
     id: int
@@ -37,6 +39,7 @@ class EventCreate(BaseModel):
     description: Optional[str] = None
     club_id: int
     points: int = 0
+    image_url: Optional[str] = None  # Event image/banner
 class EventOut(EventCreate):
     id: int
 
@@ -113,6 +116,9 @@ class PollOut(PollCreate):
 
     class Config:
         orm_mode = True
+
+class AssignModeratorRequest(BaseModel):
+    moderator_id: int
 
 class PollResults(BaseModel):
     poll_id: int
