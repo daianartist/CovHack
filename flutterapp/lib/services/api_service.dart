@@ -61,6 +61,22 @@ class ApiService {
     }
   }
 
+  // Get user's clubs where they are moderator
+  Future<List<dynamic>> getUserClubs() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/clubs/'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error getting user clubs: ${response.body}');
+    }
+  }
+
   // Password reset request (send code)
   Future<Map<String, dynamic>> forgotPassword(String email) async {
     final response = await http.post(

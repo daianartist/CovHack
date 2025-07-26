@@ -5,7 +5,9 @@ import 'create_event_screen.dart';
 import 'club_notifications_screen.dart';
 
 class ClubProfileScreen extends StatefulWidget {
-  const ClubProfileScreen({super.key});
+  final Map<String, dynamic> club;
+  
+  const ClubProfileScreen({super.key, required this.club});
 
   @override
   State<ClubProfileScreen> createState() => _ClubProfileScreenState();
@@ -29,6 +31,11 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final String clubName = widget.club['name'] ?? 'Club';
+    final String clubDescription = widget.club['description'] ?? 'No description';
+    final int members = int.tryParse('${widget.club['members'] ?? 0}') ?? 0;
+    final String category = widget.club['category'] ?? 'Club';
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: NestedScrollView(
@@ -198,9 +205,9 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Basketball Club',
-                                        style: TextStyle(
+                                      Text(
+                                        clubName,
+                                        style: const TextStyle(
                                           fontSize: 24,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
@@ -208,7 +215,7 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Sports & Basketball',
+                                        category,
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: Colors.white.withOpacity(0.9),
@@ -225,9 +232,9 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
                                   children: [
                                     Row(
                                       children: [
-                                        _buildCompactStatColumn('23', 'Posts'),
+                                        _buildCompactStatColumn('0', 'Posts'),
                                         const SizedBox(width: 20),
-                                        _buildCompactStatColumn('6', 'Members'),
+                                        _buildCompactStatColumn(members.toString(), 'Members'),
                                       ],
                                     ),
                                   ],
@@ -298,7 +305,7 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Basketball Club brings together passionate players and fans. Join us for tournaments, training sessions, and exciting matches throughout the semester! 🏀',
+                    clubDescription,
                     style: TextStyle(
                       fontSize: 15,
                       color: Colors.grey[700],
@@ -1116,9 +1123,9 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Basketball Club',
-                        style: TextStyle(
+                      Text(
+                        widget.club['name'] ?? 'Club',
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: Colors.black87,
@@ -1379,7 +1386,7 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
 
   void _showEditAboutDialog() {
     final TextEditingController controller = TextEditingController(
-      text: 'Basketball Club brings together passionate players and fans. Join us for tournaments, training sessions, and exciting matches throughout the semester! 🏀',
+      text: widget.club['description'] ?? 'No description',
     );
 
     showDialog(

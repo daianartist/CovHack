@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../profile_club_account.dart';
-// import '../services/api_service.dart'; // Временно закомментировано
+import '../services/api_service.dart';
 
 class ProfileSwitchButton extends StatefulWidget {
   const ProfileSwitchButton({super.key});
@@ -12,6 +12,8 @@ class ProfileSwitchButton extends StatefulWidget {
 
 class _ProfileSwitchButtonState extends State<ProfileSwitchButton> {
   bool _isOrganizer = false;
+  bool _isLoading = true;
+  List<dynamic> _userClubs = [];
   final GlobalKey _buttonKey = GlobalKey();
 
   @override
@@ -21,35 +23,31 @@ class _ProfileSwitchButtonState extends State<ProfileSwitchButton> {
   }
 
   Future<void> _checkUserRole() async {
-    // Временно всегда показываем кнопку для демонстрации
-    if (mounted) {
-      setState(() {
-        _isOrganizer = true;
-      });
-    }
-    
-    // Закомментированный код для API проверки
-    /*
     try {
       final user = await ApiService().getMe();
+      final userClubs = await ApiService().getUserClubs();
+      
       if (mounted) {
         setState(() {
-          _isOrganizer = user['role'] == 'organizer';
+          _isOrganizer = userClubs.isNotEmpty;
+          _userClubs = userClubs;
+          _isLoading = false;
         });
       }
     } catch (e) {
-      // If error, assume not an organizer
+      // Если API недоступен или ошибка, не показываем кнопку
       if (mounted) {
         setState(() {
           _isOrganizer = false;
+          _userClubs = [];
+          _isLoading = false;
         });
       }
     }
-    */
   }
 
   void _showProfileDropdown() {
-    if (!_isOrganizer) return;
+    if (!_isOrganizer || _isLoading) return;
 
     final RenderBox buttonBox = _buttonKey.currentContext!.findRenderObject() as RenderBox;
     final Offset offset = buttonBox.localToGlobal(Offset.zero);
@@ -133,8 +131,9 @@ class _ProfileSwitchButtonState extends State<ProfileSwitchButton> {
             ),
           ),
         ),
-        PopupMenuItem<String>(
-          value: 'club',
+        // Добавляем клубы пользователя
+        ..._userClubs.map((club) => PopupMenuItem<String>(
+          value: 'club_${club['id']}',
           height: 65,
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -165,22 +164,23 @@ class _ProfileSwitchButtonState extends State<ProfileSwitchButton> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Club Profile',
-                        style: TextStyle(
+                        club['name'] ?? 'Club',
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         'Manage your club',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
                         ),
@@ -196,7 +196,7 @@ class _ProfileSwitchButtonState extends State<ProfileSwitchButton> {
               ],
             ),
           ),
-        ),
+        )).toList(),
       ],
     ).then((value) {
       if (value != null) {
@@ -209,11 +209,15 @@ class _ProfileSwitchButtonState extends State<ProfileSwitchButton> {
             ),
             (route) => false, // Удаляем все предыдущие экраны
           );
-        } else if (value == 'club') {
+        } else if (value.startsWith('club_')) {
+          // Извлекаем ID клуба из значения
+          final clubId = int.parse(value.substring(5));
+          final club = _userClubs.firstWhere((c) => c['id'] == clubId);
+          
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const ClubProfileScreen(),
+              builder: (context) => ClubProfileScreen(club: club),
             ),
           );
         }
@@ -223,6 +227,17 @@ class _ProfileSwitchButtonState extends State<ProfileSwitchButton> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Container(
+        margin: const EdgeInsets.only(right: 4),
+        child: const SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
     if (!_isOrganizer) {
       // Если не организатор, не показываем кнопку
       return const SizedBox.shrink();

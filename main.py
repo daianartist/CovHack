@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from models import User, Base, Club, Event, Membership, Registration
 from schemas import (
-    PostCreate, PostOut, UserCreate, UserLogin, Token, ClubCreate, ClubOut, 
+    PostCreate, PostOut, UserCreate, UserLogin, Token, ClubCreate, ClubOut, ClubWithMembers,
     EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, 
     RegistrationOut, UserOut, ForgotPasswordRequest, ResetPasswordRequest, 
     PollCreate, PollOut, PollVote, PollResults, AssignModeratorRequest
@@ -140,6 +140,40 @@ def create_club(
 @app.get("/clubs/", response_model=List[ClubOut])
 def get_clubs(db: Session = Depends(get_db)):
     return db.query(Club).all()
+
+@app.get("/user/clubs/", response_model=List[ClubWithMembers])
+def get_user_clubs(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from models import MembershipRole
+    # Получаем клубы, где пользователь является модератором
+    memberships = db.query(Membership).filter(
+        Membership.user_id == current_user.id,
+        Membership.role == MembershipRole.moderator,
+        Membership.status == "approved"
+    ).all()
+    
+    # Получаем информацию о клубах с количеством участников
+    clubs = []
+    for membership in memberships:
+        club = db.query(Club).filter(Club.id == membership.club_id).first()
+        if club:
+            # Подсчитываем количество участников
+            member_count = db.query(Membership).filter(
+                Membership.club_id == club.id,
+                Membership.status == "approved"
+            ).count()
+            
+            # Создаем объект с количеством участников
+            club_with_members = {
+                "id": club.id,
+                "name": club.name,
+                "description": club.description,
+                "created_at": club.created_at,
+                "members": member_count,
+                "category": "Club"  # Пока используем статичное значение, можно добавить поле в модель
+            }
+            clubs.append(club_with_members)
+    
+    return clubs
 
 @app.get("/clubs/{club_id}", response_model=ClubOut)
 def get_club(club_id: int = Path(...), db: Session = Depends(get_db)):

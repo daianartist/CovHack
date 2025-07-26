@@ -33,6 +33,17 @@ class ClubOut(ClubCreate):
     class Config:
         orm_mode = True
 
+class ClubWithMembers(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    created_at: datetime
+    members: int = 0  # Количество участников
+    category: Optional[str] = None  # Категория клуба
+
+    class Config:
+        orm_mode = True
+
 class EventCreate(BaseModel):
     name: str
     date: datetime
