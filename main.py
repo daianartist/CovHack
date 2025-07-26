@@ -1,13 +1,14 @@
 # main.py
-from fastapi import FastAPI, Depends, HTTPException, Path
+from fastapi import FastAPI, Depends, HTTPException, Path, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from models import User, Base, Club, Event, Membership, Registration
 from schemas import (
     PostCreate, PostOut, UserCreate, UserLogin, Token, ClubCreate, ClubOut, 
     EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, 
     RegistrationOut, UserOut, ForgotPasswordRequest, ResetPasswordRequest, 
-    PollCreate, PollOut, PollVote, PollResults
+    PollCreate, PollOut, PollVote, PollResults, AssignModeratorRequest
 )
 from auth_utils import hash_password, verify_password
 from jwt_utils import create_access_token
@@ -28,6 +29,7 @@ import string
 import os
 from sqlalchemy.orm import joinedload
 from models import Post, Poll
+import shutil
 
 reset_codes = {}
 _cache = {}
@@ -43,7 +45,15 @@ def get_sheet_responses_cached(sheet_id, range_name):
     _cache_expiry[key] = now + 600  # Cache for 10 minutes
     return data
 
+def is_club_moderator(db, user_id, club_id):
+    from models import MembershipRole, Membership
+    membership = db.query(Membership).filter_by(user_id=user_id, club_id=club_id, role=MembershipRole.moderator).first()
+    return membership is not None
+
 app = FastAPI()
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -105,11 +115,26 @@ def create_club(
         author_id=current_user.id,
         form_link=club.form_link,
         sheet_id=club.sheet_id,
-        range_name=club.range_name
+        range_name=club.range_name,
+        image_url=club.image_url
     )
     db.add(db_club)
     db.commit()
     db.refresh(db_club)
+    # Assign moderator if provided
+    if club.moderator_id:
+        from models import MembershipRole
+        db_moderator = db.query(User).filter(User.id == club.moderator_id).first()
+        if not db_moderator:
+            raise HTTPException(status_code=404, detail="Moderator user not found")
+        db_membership = Membership(
+            user_id=club.moderator_id,
+            club_id=db_club.id,
+            status="approved",
+            role=MembershipRole.moderator
+        )
+        db.add(db_membership)
+        db.commit()
     return db_club
 
 @app.get("/clubs/", response_model=List[ClubOut])
@@ -128,7 +153,10 @@ def update_club(club_id: int, club: ClubCreate, db: Session = Depends(get_db), c
     db_club = db.query(Club).filter(Club.id == club_id).first()
     if not db_club:
         raise HTTPException(status_code=404, detail="Club not found")
-    if db_club.author_id != current_user.id and current_user.role != "admin":
+    # Allow club author, admins, or club moderators to update
+    if not (db_club.author_id == current_user.id or 
+            current_user.role == UserRole.admin or 
+            is_club_moderator(db, current_user.id, club_id)):
         raise HTTPException(status_code=403, detail="Not authorized to update this club")
     for key, value in club.dict().items():
         setattr(db_club, key, value)
@@ -138,14 +166,60 @@ def update_club(club_id: int, club: ClubCreate, db: Session = Depends(get_db), c
 
 @app.delete("/clubs/{club_id}")
 def delete_club(club_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    db_club = db.query(Club).filter(Club.id == club_id).first()
-    if not db_club:
+    if current_user.role != UserRole.admin:
+        raise HTTPException(status_code=403, detail="Only admins can delete clubs")
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club:
         raise HTTPException(status_code=404, detail="Club not found")
-    if db_club.author_id != current_user.id and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized to delete this club")
-    db.delete(db_club)
+    db.delete(club)
     db.commit()
     return {"detail": "Club deleted"}
+
+@app.put("/clubs/{club_id}/moderator")
+def assign_club_moderator(
+    club_id: int, 
+    request: AssignModeratorRequest, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    # Only admins can assign moderators
+    if current_user.role != UserRole.admin:
+        raise HTTPException(status_code=403, detail="Only admins can assign moderators")
+    
+    # Check if club exists
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Check if moderator user exists
+    moderator_user = db.query(User).filter(User.id == request.moderator_id).first()
+    if not moderator_user:
+        raise HTTPException(status_code=404, detail="Moderator user not found")
+    
+    # Check if membership already exists
+    from models import MembershipRole
+    existing_membership = db.query(Membership).filter(
+        Membership.user_id == request.moderator_id,
+        Membership.club_id == club_id
+    ).first()
+    
+    if existing_membership:
+        # Update existing membership to moderator role
+        existing_membership.role = MembershipRole.moderator
+        existing_membership.status = "approved"
+        db.commit()
+        return {"detail": f"User {moderator_user.name} promoted to moderator for club {club.name}"}
+    else:
+        # Create new membership with moderator role
+        new_membership = Membership(
+            user_id=request.moderator_id,
+            club_id=club_id,
+            status="approved",
+            role=MembershipRole.moderator
+        )
+        db.add(new_membership)
+        db.commit()
+        return {"detail": f"User {moderator_user.name} assigned as moderator for club {club.name}"}
 
 ### **Events**
 
@@ -154,9 +228,17 @@ def create_event(event: EventCreate, db: Session = Depends(get_db), current_user
     db_club = db.query(Club).filter(Club.id == event.club_id).first()
     if not db_club:
         raise HTTPException(status_code=404, detail="Club not found")
-    if db_club.author_id != current_user.id and current_user.role != "admin":
+    # Only admins or moderators of this club can create events
+    if not (current_user.role == UserRole.admin or is_club_moderator(db, current_user.id, event.club_id)):
         raise HTTPException(status_code=403, detail="Not authorized to create event for this club")
-    db_event = Event(**event.dict())
+    db_event = Event(
+        name=event.name,
+        date=event.date,
+        description=event.description,
+        club_id=event.club_id,
+        points=event.points,
+        image_url=event.image_url
+    )
     db.add(db_event)
     db.commit()
     db.refresh(db_event)
@@ -203,7 +285,10 @@ def update_membership_status(membership_id: int, status: str, db: Session = Depe
     if not db_membership:
         raise HTTPException(status_code=404, detail="Membership not found")
     db_club = db.query(Club).filter(Club.id == db_membership.club_id).first()
-    if db_club.author_id != current_user.id and current_user.role != "admin":
+    # Allow club author, admins, or club moderators to update membership status
+    if not (db_club.author_id == current_user.id or 
+            current_user.role == UserRole.admin or 
+            is_club_moderator(db, current_user.id, db_membership.club_id)):
         raise HTTPException(status_code=403, detail="Not authorized to update membership for this club")
     db_membership.status = status
     db.commit()
@@ -242,7 +327,10 @@ def get_pending_memberships(club_id: int, db: Session = Depends(get_db), current
     db_club = db.query(Club).filter(Club.id == club_id).first()
     if not db_club:
         raise HTTPException(status_code=404, detail="Club not found")
-    if db_club.author_id != current_user.id and current_user.role != "admin":
+    # Allow club author, admins, or club moderators to view pending memberships
+    if not (db_club.author_id == current_user.id or 
+            current_user.role == UserRole.admin or 
+            is_club_moderator(db, current_user.id, club_id)):
         raise HTTPException(status_code=403, detail="Not authorized to view pending memberships for this club")
     return db.query(Membership).filter(Membership.club_id == club_id, Membership.status == "pending").all()
 
@@ -255,7 +343,10 @@ def get_club_applications(
     club = db.query(Club).filter(Club.id == club_id).first()
     if not club:
         raise HTTPException(status_code=404, detail="Club not found")
-    if club.author_id != current_user.id and current_user.role != "admin":
+    # Allow club author, admins, or club moderators to view applications
+    if not (club.author_id == current_user.id or 
+            current_user.role == UserRole.admin or 
+            is_club_moderator(db, current_user.id, club_id)):
         raise HTTPException(status_code=403, detail="Not authorized")
     if not club.sheet_id or not club.range_name:
         raise HTTPException(status_code=400, detail="Sheet info not set for this club")
@@ -272,7 +363,12 @@ def get_club_applications_csv(
     current_user: User = Depends(get_current_user)
 ):
     club = db.query(Club).filter(Club.id == club_id).first()
-    if not club or (club.author_id != current_user.id and current_user.role != "admin"):
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    # Allow club author, admins, or club moderators to export applications
+    if not (club.author_id == current_user.id or 
+            current_user.role == UserRole.admin or 
+            is_club_moderator(db, current_user.id, club_id)):
         raise HTTPException(status_code=403, detail="Not authorized")
     if not club.sheet_id or not club.range_name:
         raise HTTPException(status_code=400, detail="Sheet info not set for this club")
@@ -311,15 +407,85 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
 
 @app.post("/reset-password")
 def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
-    if reset_codes.get(request.email) != request.code:
-        raise HTTPException(status_code=400, detail="Invalid code")
     user = db.query(User).filter(User.email == request.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    if request.email not in reset_codes or reset_codes[request.email] != request.code:
+        raise HTTPException(status_code=400, detail="Invalid reset code")
+    
     user.password = hash_password(request.new_password)
     db.commit()
-    reset_codes.pop(request.email, None)
-    return {"detail": "Password reset successful"}
+    
+    # Remove the used reset code
+    del reset_codes[request.email]
+    
+    return {"detail": "Password reset successfully"}
+
+### **Image Upload Endpoints**
+
+ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def save_uploaded_file(upload_file: UploadFile, folder: str, filename: str) -> str:
+    """Save uploaded file and return the file path"""
+    file_path = f"static/images/{folder}/{filename}"
+    
+    # Ensure directory exists
+    os.makedirs(f"static/images/{folder}", exist_ok=True)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(upload_file.file, buffer)
+    
+    return f"/static/images/{folder}/{filename}"
+
+@app.post("/upload/club-image")
+async def upload_club_image(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload image for a club"""
+    # Allow admins or moderators to upload club images
+    if current_user.role not in [UserRole.admin, UserRole.moderator]:
+        raise HTTPException(status_code=403, detail="Only admins and moderators can upload club images")
+    
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed")
+    
+    if file.size and file.size > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB")
+    
+    # Generate unique filename
+    file_extension = file.filename.split(".")[-1]
+    filename = f"club_{int(time.time())}_{random.randint(1000, 9999)}.{file_extension}"
+    
+    file_path = save_uploaded_file(file, "clubs", filename)
+    
+    return {"image_url": file_path, "filename": filename}
+
+@app.post("/upload/event-image")
+async def upload_event_image(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload image for an event"""
+    # Allow admins or moderators to upload event images
+    if current_user.role not in [UserRole.admin, UserRole.moderator]:
+        raise HTTPException(status_code=403, detail="Only admins and moderators can upload event images")
+    
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed")
+    
+    if file.size and file.size > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB")
+    
+    # Generate unique filename
+    file_extension = file.filename.split(".")[-1]
+    filename = f"event_{int(time.time())}_{random.randint(1000, 9999)}.{file_extension}"
+    
+    file_path = save_uploaded_file(file, "events", filename)
+    
+    return {"image_url": file_path, "filename": filename}
 
 @app.post("/clubs/{club_id}/posts/", response_model=PostOut)
 def create_post(club_id: int, post: PostCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -327,7 +493,7 @@ def create_post(club_id: int, post: PostCreate, db: Session = Depends(get_db), c
     if not club:
         raise HTTPException(status_code=404, detail="Club not found")
     # Only moderators of this club or admins can create
-    if not (current_user.role == UserRole.admin or (current_user.role == UserRole.moderator and club.author_id == current_user.id)):
+    if not (current_user.role == UserRole.admin or is_club_moderator(db, current_user.id, club_id)):
         raise HTTPException(status_code=403, detail="Not authorized to create post for this club")
     db_post = Post(
         club_id=club_id,
@@ -359,7 +525,7 @@ def update_post(post_id: int, post: PostCreate, db: Session = Depends(get_db), c
     if not db_post:
         raise HTTPException(status_code=404, detail="Post not found")
     club = db.query(Club).filter(Club.id == db_post.club_id).first()
-    if not (current_user.role == UserRole.admin or (current_user.role == UserRole.moderator and club.author_id == current_user.id)):
+    if not (current_user.role == UserRole.admin or is_club_moderator(db, current_user.id, club.id)):
         raise HTTPException(status_code=403, detail="Not authorized to update this post")
     db_post.description = post.description
     db_post.image_url = post.image_url
@@ -374,7 +540,7 @@ def delete_post(post_id: int, db: Session = Depends(get_db), current_user: User 
     if not db_post:
         raise HTTPException(status_code=404, detail="Post not found")
     club = db.query(Club).filter(Club.id == db_post.club_id).first()
-    if not (current_user.role == UserRole.admin or (current_user.role == UserRole.moderator and club.author_id == current_user.id)):
+    if not (current_user.role == UserRole.admin or is_club_moderator(db, current_user.id, club.id)):
         raise HTTPException(status_code=403, detail="Not authorized to delete this post")
     db.delete(db_post)
     db.commit()
@@ -386,7 +552,7 @@ def create_poll(club_id: int, poll: PollCreate, db: Session = Depends(get_db), c
     if not club:
         raise HTTPException(status_code=404, detail="Club not found")
     # Only moderators of this club or admins can create polls
-    if not (current_user.role == UserRole.admin or (current_user.role == UserRole.moderator and club.author_id == current_user.id)):
+    if not (current_user.role == UserRole.admin or is_club_moderator(db, current_user.id, club_id)):
         raise HTTPException(status_code=403, detail="Not authorized to create poll for this club")
     if len(poll.options) < 2:
         raise HTTPException(status_code=400, detail="Poll must have at least 2 options")
@@ -448,3 +614,5 @@ def get_poll_results(poll_id: int, db: Session = Depends(get_db)):
         total_votes=total_votes,
         results=results
     )
+
+
