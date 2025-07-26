@@ -19,8 +19,10 @@ class Token(BaseModel):
 class ClubCreate(BaseModel):
     name: str
     description: Optional[str] = None
-    author_id: int
     form_link: Optional[str] = None
+    sheet_id: Optional[str] = None
+    range_name: Optional[str] = None
+    questionnaire_url: Optional[str] = None
 
 class ClubOut(ClubCreate):
     id: int
@@ -35,7 +37,6 @@ class EventCreate(BaseModel):
     description: Optional[str] = None
     club_id: int
     points: int = 0
-
 class EventOut(EventCreate):
     id: int
 
@@ -65,10 +66,11 @@ class RegistrationOut(RegistrationCreate):
     class Config:
         orm_mode = True
 
-class ForgotPasswordRequest(BaseModel):
+class UserOut(BaseModel):
+    id: int
+    name: str
     email: EmailStr
+    role: str
 
-class ResetPasswordRequest(BaseModel):
-    email: EmailStr
-    code: str
-    new_password: str
+    class Config:
+        orm_mode = True
