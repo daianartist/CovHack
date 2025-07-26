@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class WebViewScreen extends StatelessWidget {
   final String url;
@@ -16,7 +16,7 @@ class WebViewScreen extends StatelessWidget {
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      // body: WebViewWidget(controller: WebViewController()..loadRequest(Uri.parse(url))),
+      body: WebViewWidget(controller: WebViewController()..loadRequest(Uri.parse(url))),
     );
   }
 }

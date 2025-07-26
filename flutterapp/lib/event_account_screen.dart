@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'screens/webview_screen.dart';
 
 class EventAccountScreen extends StatefulWidget {
   const EventAccountScreen({super.key});
@@ -163,9 +164,16 @@ class _EventAccountScreenState extends State<EventAccountScreen>
                         flex: 2,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            setState(() {
-                              _isJoined = !_isJoined;
-                            });
+                            // Открываем WebViewScreen с url формы
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const WebViewScreen(
+                                  url: 'https://docs.google.com/forms/d/e/1FAIpQLSdoUw7-EYhFe2skW15Wdtlyx8cDfQZtccYiRz4yfB7l3CUJzQ/viewform?usp=header',
+                                  title: 'Вступить в клуб',
+                                ),
+                              ),
+                            );
                           },
                           icon: Icon(
                             _isJoined ? Icons.check_rounded : Icons.group_add_rounded,
@@ -836,7 +844,16 @@ class _EventAccountScreenState extends State<EventAccountScreen>
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Join event
+                    // Открываем WebViewScreen с url формы
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const WebViewScreen(
+                          url: 'https://docs.google.com/forms/d/e/1FAIpQLSdoUw7-EYhFe2skW15Wdtlyx8cDfQZtccYiRz4yfB7l3CUJzQ/viewform?usp=header',
+                          title: 'Вступить в клуб',
+                        ),
+                      ),
+                    );
                   },
                   icon: const Icon(
                     Icons.event_available_rounded,
