@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, Path
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from models import User, Base, Club, Event, Membership, Registration
-from schemas import UserCreate, UserLogin, Token, ClubCreate, ClubOut, EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, RegistrationOut, UserOut
+from schemas import UserCreate, UserLogin, Token, ClubCreate, ClubOut, EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, RegistrationOut, UserOut, ForgotPasswordRequest, ResetPasswordRequest
 from auth_utils import hash_password, verify_password
 from jwt_utils import create_access_token
 from database import get_db  # You need a get_db dependency for SQLAlchemy session
@@ -17,7 +17,12 @@ from fastapi.responses import StreamingResponse
 from io import StringIO
 import time
 from models import UserRole
+from fastapi.middleware.cors import CORSMiddleware
+import random
+import string
+import os
 
+reset_codes = {}
 _cache = {}
 _cache_expiry = {}
 
@@ -32,6 +37,7 @@ def get_sheet_responses_cached(sheet_id, range_name):
     return data
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Для разработки можно оставить *, для продакшена укажите конкретные адреса
@@ -280,3 +286,30 @@ def get_club_questionnaire_url(club_id: int, db: Session = Depends(get_db)):
     if not club:
         raise HTTPException(status_code=404, detail="Club not found")
     return {"questionnaire_url": club.questionnaire_url}
+@app.post("/forgot-password")
+def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    code = ''.join(random.choices(string.digits, k=6))
+    reset_codes[request.email] = code
+
+    # Логируем код в файл
+    log_path = os.path.join(os.getcwd(), "reset_codes_log.txt")
+    with open(log_path, "a") as f:
+        f.write(f"{request.email}: {code}\n")
+
+    return {"detail": "Reset code sent", "code": code}
+
+@app.post("/reset-password")
+def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    if reset_codes.get(request.email) != request.code:
+        raise HTTPException(status_code=400, detail="Invalid code")
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.password = hash_password(request.new_password)
+    db.commit()
+    reset_codes.pop(request.email, None)
+    return {"detail": "Password reset successful"}
