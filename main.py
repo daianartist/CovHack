@@ -3,7 +3,12 @@ from fastapi import FastAPI, Depends, HTTPException, Path
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from models import User, Base, Club, Event, Membership, Registration
-from schemas import UserCreate, UserLogin, Token, ClubCreate, ClubOut, EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, RegistrationOut, UserOut, ForgotPasswordRequest, ResetPasswordRequest
+from schemas import (
+    PostCreate, PostOut, UserCreate, UserLogin, Token, ClubCreate, ClubOut, 
+    EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, 
+    RegistrationOut, UserOut, ForgotPasswordRequest, ResetPasswordRequest, 
+    PollCreate, PollOut, PollVote, PollResults
+)
 from auth_utils import hash_password, verify_password
 from jwt_utils import create_access_token
 from database import get_db  # You need a get_db dependency for SQLAlchemy session
@@ -21,6 +26,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import random
 import string
 import os
+from sqlalchemy.orm import joinedload
+from models import Post, Poll
 
 reset_codes = {}
 _cache = {}
@@ -171,7 +178,7 @@ def get_event(event_id: int = Path(...), db: Session = Depends(get_db)):
 @app.post("/memberships/", response_model=MembershipOut)
 def create_membership(membership: MembershipCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # Only allow users to request membership for themselves
-    if membership.user_id != current_user.id and current_user.role != "admin":
+    if membership.user_id != current_user.id and current_user.role != UserRole.admin:
         raise HTTPException(status_code=403, detail="Not authorized to create membership for another user")
     db_membership = Membership(**membership.dict())
     db.add(db_membership)
@@ -313,3 +320,131 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
     db.commit()
     reset_codes.pop(request.email, None)
     return {"detail": "Password reset successful"}
+
+@app.post("/clubs/{club_id}/posts/", response_model=PostOut)
+def create_post(club_id: int, post: PostCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    # Only moderators of this club or admins can create
+    if not (current_user.role == UserRole.admin or (current_user.role == UserRole.moderator and club.author_id == current_user.id)):
+        raise HTTPException(status_code=403, detail="Not authorized to create post for this club")
+    db_post = Post(
+        club_id=club_id,
+        author_id=current_user.id,
+        description=post.description,
+        image_url=post.image_url,
+        event_id=post.event_id
+    )
+    db.add(db_post)
+    db.commit()
+    db.refresh(db_post)
+    return db_post
+
+@app.get("/clubs/{club_id}/posts/", response_model=List[PostOut])
+def list_posts(club_id: int, db: Session = Depends(get_db)):
+    posts = db.query(Post).filter(Post.club_id == club_id).order_by(Post.created_at.desc()).all()
+    return posts
+
+@app.get("/posts/{post_id}", response_model=PostOut)
+def get_post(post_id: int, db: Session = Depends(get_db)):
+    post = db.query(Post).options(joinedload(Post.event)).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
+
+@app.put("/posts/{post_id}", response_model=PostOut)
+def update_post(post_id: int, post: PostCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_post = db.query(Post).filter(Post.id == post_id).first()
+    if not db_post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    club = db.query(Club).filter(Club.id == db_post.club_id).first()
+    if not (current_user.role == UserRole.admin or (current_user.role == UserRole.moderator and club.author_id == current_user.id)):
+        raise HTTPException(status_code=403, detail="Not authorized to update this post")
+    db_post.description = post.description
+    db_post.image_url = post.image_url
+    db_post.event_id = post.event_id
+    db.commit()
+    db.refresh(db_post)
+    return db_post
+
+@app.delete("/posts/{post_id}")
+def delete_post(post_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_post = db.query(Post).filter(Post.id == post_id).first()
+    if not db_post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    club = db.query(Club).filter(Club.id == db_post.club_id).first()
+    if not (current_user.role == UserRole.admin or (current_user.role == UserRole.moderator and club.author_id == current_user.id)):
+        raise HTTPException(status_code=403, detail="Not authorized to delete this post")
+    db.delete(db_post)
+    db.commit()
+    return {"detail": "Post deleted"}
+
+@app.post("/clubs/{club_id}/polls/", response_model=PollOut)
+def create_poll(club_id: int, poll: PollCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    # Only moderators of this club or admins can create polls
+    if not (current_user.role == UserRole.admin or (current_user.role == UserRole.moderator and club.author_id == current_user.id)):
+        raise HTTPException(status_code=403, detail="Not authorized to create poll for this club")
+    if len(poll.options) < 2:
+        raise HTTPException(status_code=400, detail="Poll must have at least 2 options")
+    db_poll = Poll(
+        club_id=club_id,
+        author_id=current_user.id,
+        question=poll.question,
+        options=poll.options,
+        votes={}
+    )
+    db.add(db_poll)
+    db.commit()
+    db.refresh(db_poll)
+    return db_poll
+
+@app.get("/clubs/{club_id}/polls/", response_model=List[PollOut])
+def list_polls(club_id: int, db: Session = Depends(get_db)):
+    polls = db.query(Poll).filter(Poll.club_id == club_id).order_by(Poll.created_at.desc()).all()
+    return polls
+
+@app.get("/polls/{poll_id}", response_model=PollOut)
+def get_poll(poll_id: int, db: Session = Depends(get_db)):
+    poll = db.query(Poll).filter(Poll.id == poll_id).first()
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    return poll
+
+@app.post("/polls/{poll_id}/vote")
+def vote_poll(poll_id: int, vote: PollVote, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    poll = db.query(Poll).filter(Poll.id == poll_id).first()
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    if vote.option not in poll.options:
+        raise HTTPException(status_code=400, detail="Invalid option")
+    # Check if user already voted
+    for option_votes in poll.votes.values():
+        if current_user.id in option_votes:
+            raise HTTPException(status_code=400, detail="User already voted in this poll")
+    # Add vote
+    if vote.option not in poll.votes:
+        poll.votes[vote.option] = []
+    poll.votes[vote.option].append(current_user.id)
+    db.commit()
+    return {"detail": "Vote recorded successfully"}
+
+@app.get("/polls/{poll_id}/results", response_model=PollResults)
+def get_poll_results(poll_id: int, db: Session = Depends(get_db)):
+    poll = db.query(Poll).filter(Poll.id == poll_id).first()
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    # Calculate results
+    total_votes = sum(len(votes) for votes in poll.votes.values())
+    results = {option: len(poll.votes.get(option, [])) for option in poll.options}
+    return PollResults(
+        poll_id=poll.id,
+        question=poll.question,
+        options=poll.options,
+        votes=poll.votes,
+        total_votes=total_votes,
+        results=results
+    )
