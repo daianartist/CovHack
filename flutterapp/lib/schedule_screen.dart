@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'notifications_screen.dart';
+import 'widgets/profile_switch_button.dart';
 
 class ScheduleScreen extends StatelessWidget {
   const ScheduleScreen({super.key});
@@ -27,6 +28,8 @@ class ScheduleScreen extends StatelessWidget {
               children: [
                 Icon(Icons.access_time, size: 30, color: Colors.black),
                 const SizedBox(width: 16),
+                const ProfileSwitchButton(),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
                     Navigator.push(

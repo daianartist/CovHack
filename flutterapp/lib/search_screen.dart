@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'event_account_screen.dart';
 import 'notifications_screen.dart';
+import 'widgets/profile_switch_button.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -15,6 +16,7 @@ class SearchScreen extends StatelessWidget {
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
+          const ProfileSwitchButton(),
           IconButton(
             icon: Icon(Icons.notifications_outlined),
             onPressed: () {

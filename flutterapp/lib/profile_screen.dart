@@ -3,6 +3,7 @@ import 'ranking.dart';
 import 'notifications_screen.dart';
 import 'certificates.dart';
 import 'services/api_service.dart';
+import 'widgets/profile_switch_button.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -46,11 +47,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
       appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
+        title: Row(
+          children: [
+            const Text(
+              'Profile',
+              style: TextStyle(
+                color: Colors.black, 
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Text(
+                'User',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
+          const ProfileSwitchButton(),
           IconButton(
             icon: const Icon(Icons.notifications_none_outlined, color: Colors.black),
             onPressed: () {
