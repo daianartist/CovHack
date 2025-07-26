@@ -18,32 +18,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   int maxParticipants = 50;
   bool isPublic = true;
   
-  final List<Map<String, dynamic>> categories = [
-    {
-      'id': 'tournament',
-      'name': 'Tournament',
-      'icon': Icons.emoji_events_rounded,
-      'color': Colors.amber,
-    },
-    {
-      'id': 'training',
-      'name': 'Training',
-      'icon': Icons.fitness_center_rounded,
-      'color': Colors.blue,
-    },
-    {
-      'id': 'meeting',
-      'name': 'Meeting',
-      'icon': Icons.groups_rounded,
-      'color': Colors.green,
-    },
-    {
-      'id': 'social',
-      'name': 'Social',
-      'icon': Icons.celebration_rounded,
-      'color': Colors.purple,
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -96,8 +70,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Event Category Section
-            _buildCategorySection(),
             
             const SizedBox(height: 20),
             
@@ -125,125 +97,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             _buildCreateButton(),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCategorySection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.category_rounded,
-                  color: Color(0xFF3B82F6),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Event Category',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          
-          // Category Grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 2.5,
-            ),
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              final isSelected = selectedCategory == category['id'];
-              
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedCategory = category['id'];
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected 
-                        ? category['color'].withOpacity(0.1) 
-                        : Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected 
-                          ? category['color'] 
-                          : Colors.grey[200]!,
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isSelected 
-                              ? category['color'] 
-                              : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          category['icon'],
-                          color: isSelected ? Colors.white : Colors.grey[600],
-                          size: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          category['name'],
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected 
-                                ? category['color'] 
-                                : Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
       ),
     );
   }

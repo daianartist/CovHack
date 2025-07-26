@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../profile_screen.dart';
+import '../main.dart';
 import '../profile_club_account.dart';
 // import '../services/api_service.dart'; // Временно закомментировано
 
@@ -201,11 +201,13 @@ class _ProfileSwitchButtonState extends State<ProfileSwitchButton> {
     ).then((value) {
       if (value != null) {
         if (value == 'user') {
-          Navigator.push(
+          // Навигация на основной экран с открытой вкладкой профиля
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-              builder: (context) => const ProfileScreen(),
+              builder: (context) => const MainScreen(initialTab: 4),
             ),
+            (route) => false, // Удаляем все предыдущие экраны
           );
         } else if (value == 'club') {
           Navigator.push(

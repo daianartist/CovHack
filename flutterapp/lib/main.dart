@@ -56,7 +56,9 @@ class CoventryUniversityApp extends StatelessWidget {
 
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialTab;
+  
+  const MainScreen({super.key, this.initialTab = 0});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -65,6 +67,14 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _navBarIndex = 0;
   int _screenIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Устанавливаем начальную вкладку
+    _navBarIndex = widget.initialTab;
+    _screenIndex = widget.initialTab > 2 ? widget.initialTab - 1 : widget.initialTab;
+  }
 
   final List<Widget> _screens = const [
     HomeScreen(),
