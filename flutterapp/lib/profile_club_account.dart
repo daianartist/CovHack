@@ -3,6 +3,7 @@ import 'widgets/profile_switch_button.dart';
 import 'create_post_screen.dart';
 import 'create_event_screen.dart';
 import 'club_notifications_screen.dart';
+import 'services/api_service.dart';
 
 class ClubProfileScreen extends StatefulWidget {
   final Map<String, dynamic> club;
@@ -16,11 +17,29 @@ class ClubProfileScreen extends StatefulWidget {
 class _ClubProfileScreenState extends State<ClubProfileScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  List<dynamic> _posts = [];
+  bool _isLoadingPosts = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadPosts();
+  }
+
+  Future<void> _loadPosts() async {
+    try {
+      final posts = await ApiService().getClubPosts(widget.club['id']);
+      setState(() {
+        _posts = posts;
+        _isLoadingPosts = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingPosts = false;
+      });
+      // Можно показать ошибку
+    }
   }
 
   @override
@@ -232,7 +251,7 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
                                   children: [
                                     Row(
                                       children: [
-                                        _buildCompactStatColumn('0', 'Posts'),
+                                        _buildCompactStatColumn(_posts.length.toString(), 'Posts'),
                                         const SizedBox(width: 20),
                                         _buildCompactStatColumn(members.toString(), 'Members'),
                                       ],
@@ -324,7 +343,7 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const CreatePostScreen(),
+                                builder: (context) => CreatePostScreen(clubId: widget.club['id']),
                               ),
                             );
                           },
@@ -498,27 +517,81 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
   }
 
   Widget _buildPostsTab() {
-    return ListView(
+    if (_isLoadingPosts) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_posts.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.article_outlined,
+              size: 64,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'No posts yet',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Create your first post to get started!',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
       padding: const EdgeInsets.all(12),
-      children: [
-        // Пост о турнире
-        _buildPostCard(
-          timeAgo: '2h',
-          title: 'Exciting Basketball Tournament Alert! 🏆',
-          content: 'Get ready for an epic showdown! Our annual basketball tournament is just around the corner. Teams from across the university will compete for the championship title.',
-          hasImage: false,
-        ),
-        const SizedBox(height: 12),
-        // Пост с изображением турнира
-        _buildPostCard(
-          timeAgo: '1d',
-          title: 'Street Ball Tournament',
-          content: 'Get ready for the ultimate Street Ball Tournament! 🏀 Top teams from all over the world',
-          hasImage: true,
-          imageText: 'STREET\nBALL\nTOURNA\nMENT\n\nTop 20 teams from\nall over\nthe world\n\n01-14\nJULY\n2025',
-        ),
-      ],
+      itemCount: _posts.length,
+      itemBuilder: (context, index) {
+        final post = _posts[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildPostCard(
+            timeAgo: _getTimeAgo(post['created_at']),
+            title: post['description'],
+            content: post['description'],
+            hasImage: post['image_url'] != null,
+            imageText: post['image_url'] != null ? 'IMAGE' : null,
+          ),
+        );
+      },
     );
+  }
+
+  String _getTimeAgo(String? createdAt) {
+    if (createdAt == null) return 'Unknown';
+    
+    try {
+      final created = DateTime.parse(createdAt);
+      final now = DateTime.now();
+      final difference = now.difference(created);
+      
+      if (difference.inDays > 0) {
+        return '${difference.inDays}d';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours}h';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes}m';
+      } else {
+        return 'now';
+      }
+    } catch (e) {
+      return 'Unknown';
+    }
   }
 
   Widget _buildEventsTab() {
@@ -535,7 +608,7 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const CreateEventScreen(),
+                    builder: (context) => CreateEventScreen(clubId: widget.club['id']),
                   ),
                 );
               },
@@ -1428,12 +1501,36 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Save the edited text
-                setState(() {
-                  // Update the about text
-                });
+              onPressed: () async {
+                try {
+                  // Сохраняем изменения в базу данных
+                  await ApiService().updateClub(widget.club['id'], {
+                    'description': controller.text,
+                  });
+                  
+                  // Обновляем локальное состояние
+                  setState(() {
+                    widget.club['description'] = controller.text;
+                  });
+                  
+                  Navigator.pop(context);
+                  
+                  // Показываем уведомление об успехе
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Description updated successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating description: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3B82F6),

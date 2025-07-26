@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'services/api_service.dart';
 
 class CreateEventScreen extends StatefulWidget {
-  const CreateEventScreen({super.key});
+  final int clubId;
+  
+  const CreateEventScreen({super.key, required this.clubId});
 
   @override
   State<CreateEventScreen> createState() => _CreateEventScreenState();
@@ -765,7 +768,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
   }
 
-  void _createEvent() {
+  void _createEvent() async {
     if (titleController.text.trim().isEmpty) {
       _showSnackBar('Please enter event title', Colors.red[400]!);
       return;
@@ -786,11 +789,52 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       return;
     }
 
-    // Show success message
-    _showSnackBar('Event created successfully!', const Color(0xFF10B981));
+    try {
+      // Показываем индикатор загрузки
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
 
-    // Navigate back
-    Navigator.pop(context);
+      // Создаем дату и время события
+      final eventDateTime = DateTime(
+        selectedDate!.year,
+        selectedDate!.month,
+        selectedDate!.day,
+        selectedTime!.hour,
+        selectedTime!.minute,
+      );
+
+      // Сохраняем событие в базу данных
+      await ApiService().createEvent({
+        'name': titleController.text.trim(),
+        'date': eventDateTime.toIso8601String(),
+        'description': descriptionController.text.trim(),
+        'club_id': widget.clubId,
+        'points': 0, // Пока без очков
+        'image_url': selectedImagePath,
+      });
+
+      // Закрываем индикатор загрузки
+      Navigator.pop(context);
+
+      // Показываем сообщение об успехе
+      _showSnackBar('Event created successfully!', const Color(0xFF10B981));
+
+      // Возвращаемся назад
+      Navigator.pop(context);
+    } catch (e) {
+      // Закрываем индикатор загрузки
+      Navigator.pop(context);
+      
+      // Показываем ошибку
+      _showSnackBar('Error creating event: ${e.toString()}', Colors.red[400]!);
+    }
   }
 
   void _showSnackBar(String message, Color backgroundColor) {

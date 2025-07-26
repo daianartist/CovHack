@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'services/api_service.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  final int clubId;
+  
+  const CreatePostScreen({super.key, required this.clubId});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -861,7 +864,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
   }
 
-  void _publishPost() {
+  void _publishPost() async {
     if (contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -876,20 +879,58 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return;
     }
 
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Post published successfully!'),
-        backgroundColor: const Color(0xFF10B981),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
+    try {
+      // Показываем индикатор загрузки
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
 
-    // Navigate back
-    Navigator.pop(context);
+      // Сохраняем пост в базу данных
+      await ApiService().createPost(widget.clubId, {
+        'description': contentController.text.trim(),
+        'image_url': null, // Пока без изображений
+        'event_id': null, // Пока без привязки к событию
+      });
+
+      // Закрываем индикатор загрузки
+      Navigator.pop(context);
+
+      // Показываем сообщение об успехе
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Post published successfully!'),
+          backgroundColor: const Color(0xFF10B981),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+
+      // Возвращаемся назад
+      Navigator.pop(context);
+    } catch (e) {
+      // Закрываем индикатор загрузки
+      Navigator.pop(context);
+      
+      // Показываем ошибку
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error publishing post: ${e.toString()}'),
+          backgroundColor: Colors.red[400],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    }
   }
 
   @override

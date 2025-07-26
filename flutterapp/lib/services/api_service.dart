@@ -77,6 +77,40 @@ class ApiService {
     }
   }
 
+  // Get posts for a specific club
+  Future<List<dynamic>> getClubPosts(int clubId) async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/clubs/$clubId/posts/'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error getting club posts: ${response.body}');
+    }
+  }
+
+  // Update club description
+  Future<Map<String, dynamic>> updateClub(int clubId, Map<String, dynamic> data) async {
+    final token = await _getToken();
+    final response = await http.put(
+      Uri.parse('$baseUrl/clubs/$clubId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error updating club: ${response.body}');
+    }
+  }
+
   // Password reset request (send code)
   Future<Map<String, dynamic>> forgotPassword(String email) async {
     final response = await http.post(
@@ -136,22 +170,6 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Ошибка получения ивентов: ${response.body}');
-    }
-  }
-
-  // Получить посты клуба
-  Future<List<dynamic>> getClubPosts(int clubId) async {
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/clubs/$clubId/posts/'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Ошибка получения постов: ${response.body}');
     }
   }
 

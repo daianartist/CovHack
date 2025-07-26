@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from models import User, Base, Club, Event, Membership, Registration
 from schemas import (
-    PostCreate, PostOut, UserCreate, UserLogin, Token, ClubCreate, ClubOut, ClubWithMembers,
+    PostCreate, PostOut, UserCreate, UserLogin, Token, ClubCreate, ClubOut, ClubUpdate, ClubWithMembers,
     EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, 
     RegistrationOut, UserOut, ForgotPasswordRequest, ResetPasswordRequest, 
     PollCreate, PollOut, PollVote, PollResults, AssignModeratorRequest
@@ -183,7 +183,7 @@ def get_club(club_id: int = Path(...), db: Session = Depends(get_db)):
     return club
 
 @app.put("/clubs/{club_id}", response_model=ClubOut)
-def update_club(club_id: int, club: ClubCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_club(club_id: int, club: ClubUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     db_club = db.query(Club).filter(Club.id == club_id).first()
     if not db_club:
         raise HTTPException(status_code=404, detail="Club not found")
@@ -192,8 +192,10 @@ def update_club(club_id: int, club: ClubCreate, db: Session = Depends(get_db), c
             current_user.role == UserRole.admin or 
             is_club_moderator(db, current_user.id, club_id)):
         raise HTTPException(status_code=403, detail="Not authorized to update this club")
-    for key, value in club.dict().items():
-        setattr(db_club, key, value)
+    club_data = club.dict(exclude_unset=True)
+    for key, value in club_data.items():
+        if value is not None:
+            setattr(db_club, key, value)
     db.commit()
     db.refresh(db_club)
     return db_club

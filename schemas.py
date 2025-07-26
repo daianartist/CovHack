@@ -26,6 +26,16 @@ class ClubCreate(BaseModel):
     image_url: Optional[str] = None  # Club image/logo
     moderator_id: Optional[int] = None  # Optional moderator (president)
 
+class ClubUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    form_link: Optional[str] = None
+    sheet_id: Optional[str] = None
+    range_name: Optional[str] = None
+    questionnaire_url: Optional[str] = None
+    image_url: Optional[str] = None
+    moderator_id: Optional[int] = None
+
 class ClubOut(ClubCreate):
     id: int
     created_at: datetime
