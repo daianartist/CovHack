@@ -830,15 +830,9 @@ class _EventAccountScreenState extends State<EventAccountScreen>
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Открываем WebViewScreen с url формы
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WebViewScreen(
-                          url: 'https://docs.google.com/forms/d/e/1FAIpQLSdoUw7-EYhFe2skW15Wdtlyx8cDfQZtccYiRz4yfB7l3CUJzQ/viewform?usp=header',
-                          title: 'Вступить в клуб',
-                        ),
-                      ),
+                    // Просто показываем SnackBar или меняем состояние, форму не открываем
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Вы присоединились к ивенту!')),
                     );
                   },
                   icon: const Icon(
