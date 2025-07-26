@@ -45,23 +45,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     HapticFeedback.lightImpact();
   }
 
-  void _onQrDetected(String qrData) {
-    HapticFeedback.heavyImpact();
-    setState(() {
-      _isScanning = false;
-    });
-    
-    // Показываем результат сканирования
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _buildResultBottomSheet(qrData),
-    ).then((_) {
-      setState(() {
-        _isScanning = true;
-      });
-    });
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -100,13 +84,10 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       ),
       body: Stack(
         children: [
-          // Camera Preview (симуляция)
           _buildCameraPreview(),
           
-          // Overlay с рамкой для сканирования
           _buildScannerOverlay(),
           
-          // Инструкции
           _buildInstructions(),
           
        
@@ -150,7 +131,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   Widget _buildScannerOverlay() {
     return Stack(
       children: [
-        // Затемнение вокруг области сканирования
         Container(
           color: Colors.black54,
           child: Column(
@@ -177,7 +157,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           ),
         ),
         
-        // Рамка сканера
         Center(
           child: Container(
             width: 250,
@@ -188,10 +167,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             ),
             child: Stack(
               children: [
-                // Углы рамки
                 ...List.generate(4, (index) => _buildCorner(index)),
                 
-                // Анимированная линия сканирования
                 if (_isScanning) _buildScanLine(),
               ],
             ),
@@ -203,7 +180,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
 
   Widget _buildCorner(int index) {
     final corners = [
-      // Левый верхний
       const Positioned(
         top: 0,
         left: 0,
@@ -211,7 +187,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           alignment: Alignment.topLeft,
         ),
       ),
-      // Правый верхний
       const Positioned(
         top: 0,
         right: 0,
@@ -219,7 +194,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           alignment: Alignment.topRight,
         ),
       ),
-      // Левый нижний
       const Positioned(
         bottom: 0,
         left: 0,
@@ -227,7 +201,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           alignment: Alignment.bottomLeft,
         ),
       ),
-      // Правый нижний
       const Positioned(
         bottom: 0,
         right: 0,
@@ -272,6 +245,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     );
   }
 
+
   Widget _buildInstructions() {
     return Positioned(
       top: MediaQuery.of(context).size.height * 0.15,
@@ -286,7 +260,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
-              'Наведите камеру на QR код',
+              'Point your camera at the QR code',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,
@@ -296,129 +270,10 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           ),
           const SizedBox(height: 16),
           const Text(
-            'QR код должен полностью помещаться в рамку',
+            'The QR code must fit completely within the frame.',
             style: TextStyle(
               color: Colors.white70,
               fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  
-  Widget _buildResultBottomSheet(String qrData) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Хендлер
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                // Иконка успеха
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.qr_code_rounded,
-                    color: Colors.green,
-                    size: 48,
-                  ),
-                ),
-                
-                const SizedBox(height: 20),
-                
-                const Text(
-                  'QR код успешно отсканирован!',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 16),
-                
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    qrData,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'monospace',
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Сканировать ещё'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3B82F6),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Готово',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ),
           ),
         ],

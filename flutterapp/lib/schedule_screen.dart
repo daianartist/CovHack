@@ -101,7 +101,7 @@ class _ScheduleCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('ивент от дебатного клуба', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    Text('Event from Debate Club', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                     const SizedBox(height: 4),
                     Row(
                       
@@ -134,7 +134,7 @@ class _ScheduleCard extends StatelessWidget {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '"Debate Club" — встреча клуба для обсуждения актуальных тем, развития навыков аргументации и публичных выступлений.',
+                  '"Debate Club" — a club meeting to discuss current topics, develop argumentation skills and public speaking.',
                   style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 2,
