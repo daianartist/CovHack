@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'event_account_screen.dart';
 import 'notifications_screen.dart';
 import 'widgets/profile_switch_button.dart';
+import 'services/api_service.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -26,68 +27,39 @@ class _SearchScreenState extends State<SearchScreen> {
     'Languages',
   ];
 
-  final List<Map<String, dynamic>> _clubs = [
-    {
-      'name': 'Debate Club',
-      'category': 'Debates',
-      'members': 342,
-      'image': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-SJUtoF2l3LlpUsvNH1srr25P0F8g2w.png',
-      'color': Color(0xFF1E3A8A),
-      'description': 'Debate club and public speaking',
-      'isJoined': false,
-    },
-    {
-      'name': 'Tech Innovators',
-      'category': 'Technology',
-      'members': 156,
-      'image': null,
-      'color': Color(0xFF059669),
-      'description': 'Innovation and new technologies',
-      'isJoined': true,
-    },
-    {
-      'name': 'Music Society',
-      'category': 'Music',
-      'members': 234,
-      'image': null,
-      'color': Color(0xFFDC2626),
-      'description': 'University music community',
-      'isJoined': false,
-    },
-    {
-      'name': 'Art & Design',
-      'category': 'Arts',
-      'members': 189,
-      'image': null,
-      'color': Color(0xFF7C3AED),
-      'description': 'Creativity and design',
-      'isJoined': false,
-    },
-    {
-      'name': 'Sports Club',
-      'category': 'Sports',
-      'members': 287,
-      'image': null,
-      'color': Color(0xFFEA580C),
-      'description': 'Sports activities and events',
-      'isJoined': true,
-    },
-    {
-      'name': 'Science Lab',
-      'category': 'Science',
-      'members': 198,
-      'image': null,
-      'color': Color(0xFF0891B2),
-      'description': 'Scientific research and discovery',
-      'isJoined': false,
-    },
-  ];
+  List<dynamic> _clubs = [];
+  bool _isLoading = true;
+  final ApiService _apiService = ApiService();
 
-  List<Map<String, dynamic>> get _filteredClubs {
+  @override
+  void initState() {
+    super.initState();
+    _fetchClubs();
+  }
+
+  Future<void> _fetchClubs() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final clubs = await _apiService.getClubs();
+      setState(() {
+        _clubs = clubs;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Можно показать ошибку
+    }
+  }
+
+  List<dynamic> get _filteredClubs {
     return _clubs.where((club) {
       final matchesSearch = club['name'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                           club['description'].toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCategory = _selectedCategory == 'All' || club['category'] == _selectedCategory;
+                           (club['description'] ?? '').toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesCategory = _selectedCategory == 'All' || (club['category'] ?? '') == _selectedCategory;
       return matchesSearch && matchesCategory;
     }).toList();
   }
@@ -286,7 +258,9 @@ class _SearchScreenState extends State<SearchScreen> {
           
           // Club List
           Expanded(
-            child: _filteredClubs.isEmpty
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredClubs.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -377,6 +351,11 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildClubCard(Map<String, dynamic> club, int index) {
+    
+    final Color clubColor = (club['color'] is Color)
+    ? club['color']
+    : const Color(0xFF3B82F6);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -411,11 +390,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: club['color'],
+                  color: clubColor,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: club['color'].withOpacity(0.3),
+                      color: clubColor.withOpacity(0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -424,15 +403,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: club['image'] != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Image.network(
-                          club['image'],
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildClubAvatar(club);
-                          },
-                        ),
+                        child: Image.network(club['image'], fit: BoxFit.cover),
                       )
-                    : _buildClubAvatar(club),
+                    : _buildClubAvatar(clubColor, club),
               ),
               
               const SizedBox(width: 16),
@@ -456,7 +429,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        if (club['isJoined'])
+                    
+                        if (club['isJoined'] == true)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
@@ -508,14 +482,14 @@ class _SearchScreenState extends State<SearchScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: club['color'].withOpacity(0.1),
+                            color: clubColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            club['category'],
+                            club['category'] ?? '',
                             style: TextStyle(
                               fontSize: 10,
-                              color: club['color'],
+                              color: clubColor,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -555,7 +529,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildClubAvatar(Map<String, dynamic> club) {
+    Widget _buildClubAvatar(Color clubColor, Map<String, dynamic> club) {
     final words = club['name'].split(' ');
     final initials = words.length >= 2 
         ? '${words[0][0]}${words[1][0]}'
@@ -563,7 +537,7 @@ class _SearchScreenState extends State<SearchScreen> {
     
     return Container(
       decoration: BoxDecoration(
-        color: club['color'],
+        color: clubColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Center(

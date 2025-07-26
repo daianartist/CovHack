@@ -107,6 +107,70 @@ class ApiService {
     }
   }
 
+  // Получить список ивентов
+  Future<List<dynamic>> getEvents() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/events/'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Ошибка получения ивентов: ${response.body}');
+    }
+  }
+
+  // Получить посты клуба
+  Future<List<dynamic>> getClubPosts(int clubId) async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/clubs/$clubId/posts/'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Ошибка получения постов: ${response.body}');
+    }
+  }
+
+  // Создать пост
+  Future<void> createPost(int clubId, Map<String, dynamic> data) async {
+    final token = await _getToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/clubs/$clubId/posts/'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Ошибка создания поста: ${response.body}');
+    }
+  }
+
+  // Создать ивент
+  Future<void> createEvent(Map<String, dynamic> data) async {
+    final token = await _getToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/events/'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Ошибка создания ивента: ${response.body}');
+    }
+  }
+
   // Save token to SharedPreferences
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();

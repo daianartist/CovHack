@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'notifications_screen.dart';
 import 'widgets/profile_switch_button.dart';
+import 'services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,75 +17,47 @@ class _HomeScreenState extends State<HomeScreen> {
   // Track selected poll options for each post
   Map<String, String?> selectedPollOptions = {};
 
-  // Mock data for posts
-  final List<Map<String, dynamic>> posts = [
-    {
-      'clubName': 'Debate Club',
-      'clubAvatar': Icons.mic_rounded,
-      'timeAgo': '1d',
-      'type': 'event',
-      'title': 'Meet Diana Valente Barker',
-      'description': 'Meet Diana Valente Barker, a passionate Brazilian music lover and nutrition student! 🎵🎶 Her vibrant spirit shines through her love for dance, calm melodies, and creating lasting memories.',
-      'image': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-      'eventDate': 'July 28, 2025',
-      'eventTime': '18:30',
-      'avatarColor': Color(0xFF3B82F6),
-    },
-    {
-      'clubName': 'Basketball Club',
-      'clubAvatar': Icons.sports_basketball_rounded,
-      'timeAgo': '2h',
-      'type': 'text',
-      'title': 'Training Session This Friday!',
-      'description': 'Don\'t miss our intensive basketball training session this Friday at 6 PM. We\'ll be working on defensive strategies and free throws. Bring your A-game! 🏀',
-      'avatarColor': Color(0xFFFF6B35),
-    },
-    {
-      'clubName': 'Photography Club',
-      'clubAvatar': Icons.camera_alt_rounded,
-      'timeAgo': '4h',
-      'type': 'image',
-      'title': 'Golden Hour Workshop',
-      'description': 'Captured some amazing shots during our golden hour workshop last weekend. Check out these stunning landscapes! 📸',
-      'image': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-      'avatarColor': Color(0xFF10B981),
-    },
-    {
-      'clubName': 'Music Society',
-      'clubAvatar': Icons.music_note_rounded,
-      'timeAgo': '6h',
-      'type': 'poll',
-      'title': 'What should be our next performance?',
-      'description': 'Help us choose our next performance piece! Vote for your favorite option below.',
-      'pollOptions': [
-        {'option': 'Classical Symphony', 'votes': 42, 'percentage': 0.6},
-        {'option': 'Jazz Ensemble', 'votes': 28, 'percentage': 0.4},
-      ],
-      'totalVotes': 70,
-      'avatarColor': Color(0xFF8B5CF6),
-    },
-    {
-      'clubName': 'Coding Club',
-      'clubAvatar': Icons.code_rounded,
-      'timeAgo': '8h',
-      'type': 'text',
-      'title': 'Hackathon Results',
-      'description': 'Congratulations to all participants in our weekend hackathon! The creativity and technical skills demonstrated were incredible. Winners will be announced soon! 💻⚡',
-      'avatarColor': Color(0xFFF59E0B),
-    },
-  ];
+  List<dynamic> posts = [];
+  bool _isLoading = true;
+  final ApiService _apiService = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPosts();
+  }
+
+  Future<void> _fetchPosts() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      // Здесь можно получить клубы, затем для каждого клуба получить посты и объединить
+      final clubs = await _apiService.getClubs();
+      List<dynamic> allPosts = [];
+      for (var club in clubs) {
+        final clubPosts = await _apiService.getClubPosts(club['id']);
+        for (var post in clubPosts) {
+          post['clubName'] = club['name'];
+          post['clubAvatar'] = Icons.group; // Можно заменить на что-то динамическое
+          post['avatarColor'] = Color(0xFF3B82F6);
+        }
+        allPosts.addAll(clubPosts);
+      }
+      setState(() {
+        posts = allPosts;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Можно показать ошибку
+    }
+  }
 
   Future<void> _handleRefresh() async {
-    setState(() {
-      _isRefreshing = true;
-    });
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
-    
-    setState(() {
-      _isRefreshing = false;
-    });
+    await _fetchPosts();
   }
 
   @override
@@ -128,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  if (_isRefreshing && index == 0) {
+                  if (_isLoading) {
                     return const Padding(
                       padding: EdgeInsets.all(20),
                       child: Center(
@@ -138,17 +111,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                   }
-                  
-                  final adjustedIndex = _isRefreshing ? index - 1 : index;
-                  if (adjustedIndex >= posts.length) return null;
-                  
-                  final post = posts[adjustedIndex];
+                  if (posts.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Center(child: Text('Нет постов')), 
+                    );
+                  }
+                  final post = posts[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: _buildPostCard(post),
                   );
                 },
-                childCount: _isRefreshing ? posts.length + 1 : posts.length,
+                childCount: _isLoading ? 1 : posts.length,
               ),
             ),
             const SliverToBoxAdapter(
@@ -224,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 Text(
-                  post['timeAgo'],
+                  post['timeAgo'] ?? 'только что',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
