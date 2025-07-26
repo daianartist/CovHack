@@ -15,3 +15,8 @@ alembic/versions/*.pyc
 
 # OS
 .DS_Store
+
+# Google service account key
+google_service_account.json
+*.json
+
