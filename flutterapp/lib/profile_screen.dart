@@ -4,6 +4,7 @@ import 'notifications_screen.dart';
 import 'certificates.dart';
 import 'services/api_service.dart';
 import 'widgets/profile_switch_button.dart';
+import 'guest_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -44,6 +45,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Если ошибка API (пользователь не авторизован), показываем гостевой экран
+    if (_error != null) {
+      return const GuestProfileScreen();
+    }
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
       appBar: AppBar(
@@ -94,11 +100,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Text('Error: $_error'))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
                     children: [
                       _buildProfileHeader(),
                       const SizedBox(height: 24),
@@ -115,11 +119,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 16),
                       _buildStatsRow(context),
-                      const SizedBox(height: 24),
-                      _buildProgressCard(),
+                     
                     ],
                   ),
-                ),
+            ),
     );
   }
 
@@ -281,75 +284,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProgressCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.shield_outlined, color: Colors.blue[600]),
-                  const SizedBox(width: 8),
-                  const Text('Progress', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                ],
-              ),
-              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _StatColumn(value: '7', label: 'Visited Events', icon: Icons.star, iconColor: Colors.orange),
-              _StatColumn(value: '3', label: 'Organized events', icon: Icons.location_on, iconColor: Colors.blue),
-              _StatColumn(value: '1', label: 'Event\nthis month', icon: Icons.calendar_today, iconColor: Colors.purple),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-class _StatColumn extends StatelessWidget {
-  const _StatColumn({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.iconColor,
-  });
-
-  final String value;
-  final String label;
-  final IconData icon;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(width: 2),
-            Icon(icon, color: iconColor, size: 16),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.grey, fontSize: 12),
-        ),
-      ],
-    );
-  }
 } 

@@ -11,7 +11,7 @@ class SearchScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('Search'),
+
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
