@@ -261,4 +261,17 @@ class ApiService {
       throw Exception('Failed to load events');
     }
   }
+
+  Future<Map<String, dynamic>> getEventDetails(int eventId) async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/events/$eventId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Ошибка получения деталей ивента: ${response.body}');
+    }
+  }
 }
