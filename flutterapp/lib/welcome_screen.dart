@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './widgets/university_logo.dart';
 import './auth_screen.dart';
+import 'services/api_service.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -108,7 +109,9 @@ class WelcomeScreen extends StatelessWidget {
               
               // Stay as guest
               TextButton(
-                onPressed: () {
+                onPressed: () async {
+                  // Очищаем токен авторизации
+                  await ApiService().logout();
                   Navigator.pushReplacementNamed(context, '/main');
                 },
                 child: const Text(

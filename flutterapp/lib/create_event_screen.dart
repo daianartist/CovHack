@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'services/api_service.dart';
+import 'package:flutter/services.dart'; // нужно для rootBundle
+import 'package:path_provider/path_provider.dart'; // для временного файла
+
 
 class CreateEventScreen extends StatefulWidget {
   final int clubId;
@@ -20,10 +25,60 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   String selectedCategory = 'tournament';
   int maxParticipants = 50;
   bool isPublic = true;
-  String? selectedImagePath;
+  File? selectedImage;
+  bool isUploading = false;
   Duration selectedDuration = const Duration(hours: 2);
   
+void _pickImageFromAssets() async {
+  final assets = [
+    'assets/debate.png',
+    'assets/event_post.png',
+    'assets/images-2.jpeg',
+    'assets/logo_covuni.png',
+    'assets/woman.png',
+  ];
 
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.white,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) => Container(
+      padding: const EdgeInsets.all(16),
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: assets.length,
+        itemBuilder: (context, index) {
+          final asset = assets[index];
+          return GestureDetector(
+            onTap: () async {
+              final byteData = await rootBundle.load(asset);
+              final tempDir = await getTemporaryDirectory();
+              final file = File('${tempDir.path}/${asset.split('/').last}');
+              await file.writeAsBytes(byteData.buffer.asUint8List());
+
+              setState(() {
+                selectedImage = file;
+              });
+              Navigator.pop(context);
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(asset, fit: BoxFit.cover),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,11 +272,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: selectedImagePath != null ? Color(0xFF3B82F6) : Colors.grey[300]!,
-                  width: selectedImagePath != null ? 2 : 1,
+                  color: selectedImage != null ? Color(0xFF3B82F6) : Colors.grey[300]!,
+                  width: selectedImage != null ? 2 : 1,
                 ),
               ),
-              child: selectedImagePath != null
+              child: selectedImage != null
                   ? Stack(
                       children: [
                         Container(
@@ -230,7 +285,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             image: DecorationImage(
-                              image: AssetImage('assets/event_post.png'), // Placeholder
+                              image: FileImage(selectedImage!), // Use FileImage for selectedImage
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -246,7 +301,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             child: IconButton(
                               onPressed: () {
                                 setState(() {
-                                  selectedImagePath = null;
+                                  selectedImage = null;
                                 });
                               },
                               icon: const Icon(
@@ -790,6 +845,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
 
     try {
+      setState(() {
+        isUploading = true;
+      });
+
       // Показываем индикатор загрузки
       showDialog(
         context: context,
@@ -810,6 +869,18 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         selectedTime!.minute,
       );
 
+      String? imageUrl;
+      
+      // Загружаем изображение, если оно выбрано
+      if (selectedImage != null) {
+        try {
+          imageUrl = await ApiService().uploadImage(selectedImage!, 'event');
+        } catch (e) {
+          // Если загрузка изображения не удалась, продолжаем без него
+          print('Error uploading image: $e');
+        }
+      }
+
       // Сохраняем событие в базу данных
       await ApiService().createEvent({
         'name': titleController.text.trim(),
@@ -817,11 +888,15 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         'description': descriptionController.text.trim(),
         'club_id': widget.clubId,
         'points': 0, // Пока без очков
-        'image_url': selectedImagePath,
+        'image_url': imageUrl,
       });
 
       // Закрываем индикатор загрузки
       Navigator.pop(context);
+
+      setState(() {
+        isUploading = false;
+      });
 
       // Показываем сообщение об успехе
       _showSnackBar('Event created successfully!', const Color(0xFF10B981));
@@ -832,6 +907,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       // Закрываем индикатор загрузки
       Navigator.pop(context);
       
+      setState(() {
+        isUploading = false;
+      });
+
       // Показываем ошибку
       _showSnackBar('Error creating event: ${e.toString()}', Colors.red[400]!);
     }
@@ -887,9 +966,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   label: 'Camera',
                   onTap: () {
                     Navigator.pop(context);
-                    setState(() {
-                      selectedImagePath = 'camera_image.jpg';
-                    });
+                    _pickImage(ImageSource.camera);
                   },
                 ),
                 _buildImageOption(
@@ -897,9 +974,15 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   label: 'Gallery',
                   onTap: () {
                     Navigator.pop(context);
-                    setState(() {
-                      selectedImagePath = 'gallery_image.jpg';
-                    });
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+                _buildImageOption(
+                  icon: Icons.folder_rounded,
+                  label: 'From Assets',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImageFromAssets();   // <-- вот эта функция откроет галерею ассетов
                   },
                 ),
               ],
@@ -944,6 +1027,15 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         ],
       ),
     );
+  }
+
+  void _pickImage(ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        selectedImage = File(pickedFile.path);
+      });
+    }
   }
 
   void _selectDuration() {

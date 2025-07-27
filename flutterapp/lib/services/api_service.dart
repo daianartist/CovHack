@@ -1,9 +1,39 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String baseUrl = 'http://localhost:8000';
+
+  // Upload image
+  Future<String> uploadImage(File imageFile, String type) async {
+    final token = await _getToken();
+    
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/upload/$type-image'),
+    );
+    
+    request.headers['Authorization'] = 'Bearer $token';
+    
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        imageFile.path,
+      ),
+    );
+    
+    final response = await request.send();
+    final responseData = await response.stream.bytesToString();
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(responseData);
+      return data['image_url'] ?? '';
+    } else {
+      throw Exception('Error uploading image: $responseData');
+    }
+  }
 
   // User registration
   Future<Map<String, dynamic>> register(String name, String email, String password, String role) async {

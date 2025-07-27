@@ -565,7 +565,7 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
             title: post['description'],
             content: post['description'],
             hasImage: post['image_url'] != null,
-            imageText: post['image_url'] != null ? 'IMAGE' : null,
+            imageUrl: post['image_url'],
           ),
         );
       },
@@ -1155,7 +1155,7 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
     required String title,
     required String content,
     bool hasImage = false,
-    String? imageText,
+    String? imageUrl,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -1226,61 +1226,42 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
               ],
             ),
           ),
-          if (hasImage && imageText != null)
+          if (hasImage && imageUrl != null)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF87CEEB),
-                    Color(0xFFE6F3FF),
-                  ],
-                ),
               ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    left: 16,
-                    top: 16,
-                    child: Text(
-                      imageText,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                        height: 1.3,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 16,
-                    bottom: 16,
-                    child: Container(
-                      width: 60,
-                      height: 60,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  imageUrl,
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
                       decoration: BoxDecoration(
-                        color: Colors.orange,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.orange.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF87CEEB),
+                            Color(0xFFE6F3FF),
+                          ],
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.sports_basketball_rounded,
-                        color: Colors.white,
-                        size: 28,
+                      child: const Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                       ),
-                    ),
-                  ),
-                ],
+                    );
+                  },
+                ),
               ),
             ),
           Padding(

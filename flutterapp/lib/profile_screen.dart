@@ -40,6 +40,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _error = e.toString();
         _isLoading = false;
       });
+      // Если ошибка связана с авторизацией, очищаем токен
+      if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+        try {
+          await ApiService().logout();
+        } catch (_) {
+          // Игнорируем ошибки при очистке токена
+        }
+      }
     }
   }
 
@@ -92,6 +100,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   builder: (context) => const NotificationsScreen(),
                 ),
               );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.black),
+            onPressed: () async {
+              // Показываем диалог подтверждения
+              final shouldLogout = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Выйти из аккаунта?'),
+                  content: const Text('Вы уверены, что хотите выйти из аккаунта?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Отмена'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      child: const Text(
+                        'Выйти',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldLogout == true) {
+                try {
+                  await ApiService().logout();
+                  Navigator.pushReplacementNamed(context, '/');
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Ошибка при выходе: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
           ),
         ],

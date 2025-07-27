@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'services/api_service.dart';
 
 class CreatePostScreen extends StatefulWidget {
@@ -15,6 +17,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController contentController = TextEditingController();
   final List<String> pollOptions = ['', ''];
   bool isLinkToEvent = false;
+  File? selectedImage;
+  bool isUploading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -451,67 +455,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
           const SizedBox(height: 16),
           
-          // Photo Upload Area
-          GestureDetector(
-            onTap: () {
-              _selectPhotos();
-            },
-            child: Container(
-              width: double.infinity,
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.grey[300]!,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: const Icon(
-                      Icons.add_photo_alternate_rounded,
-                      color: Color(0xFF3B82F6),
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Tap to add photos',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Support multiple photos',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Caption Input
+          // Content Input
           TextField(
             controller: contentController,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: "Write a caption...",
+              hintText: "Share what's happening with your club...",
               hintStyle: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 16,
@@ -535,6 +484,101 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             style: const TextStyle(
               fontSize: 16,
               height: 1.5,
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Photo Upload Area
+          if (selectedImage != null) ...[
+            Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      selectedImage!,
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedImage = null;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          
+          GestureDetector(
+            onTap: _showImagePickerDialog,
+            child: Container(
+              width: double.infinity,
+              height: selectedImage != null ? 60 : 120,
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.grey[300]!,
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3B82F6).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: const Icon(
+                      Icons.add_photo_alternate_rounded,
+                      color: Color(0xFF3B82F6),
+                      size: 20,
+                    ),
+                  ),
+                  if (selectedImage == null) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Add photo',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ],
@@ -880,6 +924,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
 
     try {
+      setState(() {
+        isUploading = true;
+      });
+
       // Показываем индикатор загрузки
       showDialog(
         context: context,
@@ -891,15 +939,31 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         },
       );
 
+      String? imageUrl;
+      
+      // Загружаем изображение, если оно выбрано
+      if (selectedImage != null) {
+        try {
+          imageUrl = await ApiService().uploadImage(selectedImage!, 'post');
+        } catch (e) {
+          // Если загрузка изображения не удалась, продолжаем без него
+          print('Error uploading image: $e');
+        }
+      }
+
       // Сохраняем пост в базу данных
       await ApiService().createPost(widget.clubId, {
         'description': contentController.text.trim(),
-        'image_url': null, // Пока без изображений
+        'image_url': imageUrl,
         'event_id': null, // Пока без привязки к событию
       });
 
       // Закрываем индикатор загрузки
       Navigator.pop(context);
+
+      setState(() {
+        isUploading = false;
+      });
 
       // Показываем сообщение об успехе
       ScaffoldMessenger.of(context).showSnackBar(
@@ -919,6 +983,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       // Закрываем индикатор загрузки
       Navigator.pop(context);
       
+      setState(() {
+        isUploading = false;
+      });
+
       // Показываем ошибку
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -937,5 +1005,95 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   void dispose() {
     contentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error picking image: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showImagePickerDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Add Photo',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF3B82F6)),
+              ),
+              title: const Text('Take Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.photo_library_rounded, color: Colors.green),
+              ),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
