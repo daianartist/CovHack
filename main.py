@@ -8,7 +8,8 @@ from schemas import (
     PostCreate, PostOut, UserCreate, UserLogin, Token, ClubCreate, ClubOut, 
     EventCreate, EventOut, MembershipCreate, MembershipOut, RegistrationCreate, 
     RegistrationOut, UserOut, ForgotPasswordRequest, ResetPasswordRequest, 
-    PollCreate, PollOut, PollVote, PollResults, AssignModeratorRequest
+    PollCreate, PollOut, PollVote, PollResults, AssignModeratorRequest, ImageUpdateRequest,
+    AIGenerationRequest, EventAIGenerationRequest, ClubAIGenerationRequest
 )
 from auth_utils import hash_password, verify_password
 from jwt_utils import create_access_token
@@ -30,6 +31,8 @@ import os
 from sqlalchemy.orm import joinedload
 from models import Post, Poll
 import shutil
+from ai_utils import generate_post_description, generate_event_description, generate_club_description, generate_description_free
+from pydantic import BaseModel
 
 reset_codes = {}
 _cache = {}
@@ -486,6 +489,187 @@ async def upload_event_image(
     file_path = save_uploaded_file(file, "events", filename)
     
     return {"image_url": file_path, "filename": filename}
+
+### **Helper Endpoints for Image Management**
+
+@app.put("/clubs/{club_id}/image")
+def update_club_image(
+    club_id: int,
+    request: ImageUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update club image URL"""
+    db_club = db.query(Club).filter(Club.id == club_id).first()
+    if not db_club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Allow club author, admins, or club moderators to update club image
+    if not (db_club.author_id == current_user.id or 
+            current_user.role == UserRole.admin or 
+            is_club_moderator(db, current_user.id, club_id)):
+        raise HTTPException(status_code=403, detail="Not authorized to update this club")
+    
+    db_club.image_url = request.image_url
+    db.commit()
+    db.refresh(db_club)
+    return {"detail": "Club image updated successfully", "image_url": request.image_url}
+
+@app.put("/events/{event_id}/image")
+def update_event_image(
+    event_id: int,
+    request: ImageUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update event image URL"""
+    db_event = db.query(Event).filter(Event.id == event_id).first()
+    if not db_event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Allow admins or moderators of the event's club to update event image
+    if not (current_user.role == UserRole.admin or 
+            is_club_moderator(db, current_user.id, db_event.club_id)):
+        raise HTTPException(status_code=403, detail="Not authorized to update this event")
+    
+    db_event.image_url = request.image_url
+    db.commit()
+    db.refresh(db_event)
+    return {"detail": "Event image updated successfully", "image_url": request.image_url}
+
+### **AI Generation Endpoints**
+
+@app.post("/ai/generate-post-description")
+def generate_ai_post_description(
+    club_id: int,
+    request: AIGenerationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Generate AI-powered post description for a club"""
+    # Check if user can create posts for this club
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    if not (current_user.role == UserRole.admin or is_club_moderator(db, current_user.id, club_id)):
+        raise HTTPException(status_code=403, detail="Not authorized to create posts for this club")
+    
+    try:
+        if request.use_free_service:
+            description = generate_description_free(request.topic, club.name)
+        else:
+            description = generate_post_description(
+                topic=request.topic,
+                club_name=club.name,
+                tone=request.tone,
+                length=request.length
+            )
+        
+        return {
+            "generated_description": description,
+            "club_name": club.name,
+            "topic": request.topic,
+            "tone": request.tone,
+            "length": request.length
+        }
+        
+    except Exception as e:
+        # Fallback to free service if OpenAI fails
+        try:
+            description = generate_description_free(request.topic, club.name)
+            return {
+                "generated_description": description,
+                "club_name": club.name,
+                "topic": request.topic,
+                "note": "Used fallback service due to AI service error"
+            }
+        except:
+            raise HTTPException(status_code=500, detail="Failed to generate description")
+
+@app.post("/ai/generate-event-description")
+def generate_ai_event_description(
+    club_id: int,
+    request: EventAIGenerationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Generate AI-powered event description"""
+    # Check if user can create events for this club
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    if not (current_user.role == UserRole.admin or is_club_moderator(db, current_user.id, club_id)):
+        raise HTTPException(status_code=403, detail="Not authorized to create events for this club")
+    
+    try:
+        description = generate_event_description(
+            event_name=request.event_name,
+            club_name=club.name,
+            event_type=request.event_type,
+            include_details=request.include_details
+        )
+        
+        return {
+            "generated_description": description,
+            "club_name": club.name,
+            "event_name": request.event_name,
+            "event_type": request.event_type
+        }
+        
+    except Exception as e:
+        # Fallback to template
+        description = f"🎉 {club.name} is excited to announce: {request.event_name}! Join us for an amazing {request.event_type} event. Don't miss out on this incredible opportunity to connect with fellow members and have a great time!"
+        
+        return {
+            "generated_description": description,
+            "club_name": club.name,
+            "event_name": request.event_name,
+            "note": "Used fallback template due to AI service error"
+        }
+
+@app.post("/ai/generate-club-description")
+def generate_ai_club_description(
+    club_id: int,
+    request: ClubAIGenerationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Generate AI-powered club description"""
+    # Check if user can update this club
+    club = db.query(Club).filter(Club.id == club_id).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    if not (club.author_id == current_user.id or 
+            current_user.role == UserRole.admin or 
+            is_club_moderator(db, current_user.id, club_id)):
+        raise HTTPException(status_code=403, detail="Not authorized to update this club")
+    
+    try:
+        description = generate_club_description(
+            club_name=club.name,
+            activities=request.activities,
+            target_audience=request.target_audience
+        )
+        
+        return {
+            "generated_description": description,
+            "club_name": club.name,
+            "activities": request.activities,
+            "target_audience": request.target_audience
+        }
+        
+    except Exception as e:
+        # Fallback to template
+        description = f"Welcome to {club.name}! We are a vibrant community of {request.target_audience} who share a passion for {request.activities or 'learning and growing together'}. Join us for exciting activities, meaningful connections, and unforgettable experiences!"
+        
+        return {
+            "generated_description": description,
+            "club_name": club.name,
+            "note": "Used fallback template due to AI service error"
+        }
 
 @app.post("/clubs/{club_id}/posts/", response_model=PostOut)
 def create_post(club_id: int, post: PostCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

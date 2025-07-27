@@ -14,3 +14,5 @@ google-auth-oauthlib
 asyncpg
 SQLAlchemy[asyncio]
 sqladmin
+openai
+requests

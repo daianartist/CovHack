@@ -31,7 +31,7 @@ class ClubOut(ClubCreate):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class EventCreate(BaseModel):
     name: str
@@ -44,7 +44,7 @@ class EventOut(EventCreate):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class MembershipCreate(BaseModel):
     user_id: int
@@ -55,7 +55,7 @@ class MembershipOut(MembershipCreate):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class RegistrationCreate(BaseModel):
     user_id: int
@@ -67,7 +67,7 @@ class RegistrationOut(RegistrationCreate):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserOut(BaseModel):
     id: int
@@ -76,7 +76,7 @@ class UserOut(BaseModel):
     role: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
@@ -98,7 +98,7 @@ class PostOut(PostCreate):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PollCreate(BaseModel):
     question: str
@@ -115,7 +115,7 @@ class PollOut(PollCreate):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class AssignModeratorRequest(BaseModel):
     moderator_id: int
@@ -129,4 +129,22 @@ class PollResults(BaseModel):
     results: Dict[str, int]  # option -> vote count
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class ImageUpdateRequest(BaseModel):
+    image_url: str
+
+class AIGenerationRequest(BaseModel):
+    topic: str
+    tone: str = "informative"
+    length: str = "medium"
+    use_free_service: bool = False
+
+class EventAIGenerationRequest(BaseModel):
+    event_name: str
+    event_type: str = "general"
+    include_details: bool = True
+
+class ClubAIGenerationRequest(BaseModel):
+    activities: str = ""
+    target_audience: str = "students"

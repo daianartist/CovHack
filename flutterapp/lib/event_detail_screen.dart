@@ -18,11 +18,22 @@ class EventDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Image
-            Container(
-              width: double.infinity,
-              height: 200,
-              child: Image.network(
+                    // Header Image
+        Container(
+          width: double.infinity,
+          height: 200,
+          child: event.imageUrl != null && event.imageUrl!.isNotEmpty
+            ? Image.network(
+                'http://localhost:8000${event.imageUrl}',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.image_not_supported, size: 50),
+                  );
+                },
+              )
+            : Image.network(
                 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-SJUtoF2l3LlpUsvNH1srr25P0F8g2w.png',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
