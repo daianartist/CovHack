@@ -16,15 +16,35 @@ class ClubProfileScreen extends StatefulWidget {
 
 class _ClubProfileScreenState extends State<ClubProfileScreen>
     with SingleTickerProviderStateMixin {
+
   late TabController _tabController;
+
   List<dynamic> _posts = [];
   bool _isLoadingPosts = true;
+
+  List<dynamic> _events = [];              // ✅ Вынесли на уровень класса
+  bool _isLoadingEvents = true;            // ✅ Вынесли на уровень класса
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadPosts();
+    _loadEvents();                        // ✅ Теперь тут корректно вызывается
+  }
+
+  Future<void> _loadEvents() async {
+    try {
+      final events = await ApiService().getClubEvents(widget.club['id']);
+      setState(() {
+        _events = events;
+        _isLoadingEvents = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingEvents = false;
+      });
+    }
   }
 
   Future<void> _loadPosts() async {
@@ -38,7 +58,6 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
       setState(() {
         _isLoadingPosts = false;
       });
-      // Можно показать ошибку
     }
   }
 
@@ -595,6 +614,9 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
   }
 
   Widget _buildEventsTab() {
+    if (_isLoadingEvents) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -634,8 +656,24 @@ class _ClubProfileScreenState extends State<ClubProfileScreen>
           
           // Events List
           Expanded(
-            child: ListView(
-              children: [
+          child: ListView(
+            children: [
+              ..._events.map((event) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildEventCard(
+                      title: event['name'] ?? 'Untitled Event',
+                      date: event['date'] != null
+                          ? DateTime.parse(event['date']).toLocal().toString().split(' ')[0]
+                          : 'Unknown date',
+                      time: event['date'] != null
+                          ? TimeOfDay.fromDateTime(DateTime.parse(event['date'])).format(context)
+                          : 'Unknown time',
+                      location: event['location'] ?? 'TBA',
+                      participants: event['participants_count'] ?? 0,
+                      category: event['category'] ?? 'meeting',
+                      status: DateTime.parse(event['date']).isAfter(DateTime.now()) ? 'upcoming' : 'past',
+                    ),
+                  )),
                 _buildEventCard(
                   title: 'Basketball Tournament',
                   date: 'March 15, 2025',

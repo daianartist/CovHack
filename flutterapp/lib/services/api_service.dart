@@ -252,4 +252,13 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');
   }
+
+  Future<List<dynamic>> getClubEvents(int clubId) async {
+    final response = await http.get(Uri.parse('$baseUrl/clubs/$clubId/events'));
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load events');
+    }
+  }
 }
